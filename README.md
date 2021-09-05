@@ -12,17 +12,17 @@ Not much documentation is available for now, but the code has a lot of annotatio
 The GPU module of Blender 2.8 is used for drawing.  This package has a demo panel to showcase all available widgets so that you can install it and have a quick testing.  It also serves as a template or a baseline for creating __your own addons__.  I attempted to add a little bit of each feature to the demo code in order to help starters.  Below follows some images taken from the demo panel itself.
 
 ## Sample of the demo panel in the viewport
-![Viewport sample](https://github.com/mmmrqs/bl_ui_widgets/blob/master/media/Suzanne.png)
+![Viewport sample](https://github.com/mmmrqs/media/blob/main/Suzanne.png)
 
 ## Example of an Addon that uses these widgets
-![ReferenceCameras](https://github.com/mmmrqs/bl_ui_widgets/blob/master/media/RCameras.png)
+![ReferenceCameras](https://github.com/mmmrqs/media/blob/main/RCameras.png)
 https://github.com/mmmrqs/Blender-Reference-Camera-Panel-addon
 
 ## Widgets appearance
-![Widgets](https://github.com/mmmrqs/bl_ui_widgets/blob/master/media/widgets.png)
+![Widgets](https://github.com/mmmrqs/media/blob/main/widgets.png)
 
 ## A sneak peek at button's attributes
-![Code sample](https://github.com/mmmrqs/bl_ui_widgets/blob/master/media/code.png)
+![Code sample](https://github.com/mmmrqs/media/blob/main/code.png)
 
 ## Classes relationships for the BL_UI_Widgets
-![BL_UI_Widgets UML](https://github.com/mmmrqs/bl_ui_widgets/blob/master/media/Classes_UML2.png)
+![BL_UI_Widgets UML](https://github.com/mmmrqs/media/blob/main/Classes_UML2.png)
