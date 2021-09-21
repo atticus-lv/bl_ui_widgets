@@ -237,7 +237,7 @@ class BL_UI_Up_Down(BL_UI_Widget):
 
             try:
                 self.value_change_func(self, self.__up_down_value)
-            except:
+            except Exception as e:
                 pass
                  
     def mouse_down(self, x, y):    

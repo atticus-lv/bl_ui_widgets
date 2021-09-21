@@ -16,27 +16,32 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-#--- ### Header
-bl_info = {
-    "name": "BL UI Widgets",
-    "description": "UI Widgets to draw in the 3D view",
-    "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-    "version": (1, 0, 0),
-    "blender": (2, 80, 75),
-    "location": "View3D > side panel ([N]), [BL_UI_Widget] tab",
-    "support": "COMMUNITY",
-    "category": "3D View",
-    "warning": "Version numbering diverges from Jayanam's original project",
-    "doc_url": "https://github.com/mmmrqs/bl_ui_widgets",
-    "tracker_url": "https://github.com/mmmrqs/bl_ui_widgets/issues"
-    }    
+# --- ### Header
+bl_info = {"name": "BL UI Widgets",
+           "description": "UI Widgets to draw in the 3D view",
+           "author": "Marcelo M. Marques (fork of Jayanam's original project)",
+           "version": (1, 0, 1),
+           "blender": (2, 80, 75),
+           "location": "View3D > side panel ([N]), [BL_UI_Widget] tab",
+           "support": "COMMUNITY",
+           "category": "3D View",
+           "warning": "Version numbering diverges from Jayanam's original project",
+           "doc_url": "https://github.com/mmmrqs/bl_ui_widgets",
+           "tracker_url": "https://github.com/mmmrqs/bl_ui_widgets/issues"
+           }
 
-#--- ### Change log
+# --- ### Change log
 
-#v1.0.0 (09.01.2021) - by Marcelo M. Marques 
-#Added: initial creation
+# Note: Because the way Blender's Preferences window displays the Addon version number,
+# I am forced to keep this file in sync with the greatest version number of all modules.
 
-#--- ### Imports
+# v1.0.1 (09.20.2021) - by Marcelo M. Marques
+# Chang: just some pep8 code formatting
+
+# v1.0.0 (09.01.2021) - by Marcelo M. Marques
+# Added: initial creation
+
+# --- ### Imports
 import bpy
 import sys
 import importlib
@@ -45,8 +50,7 @@ from bpy.props import *
 
 modulesFullNames = {}
 
-modulesNames = [
-                'prefs',
+modulesNames = ['prefs',
                 'bl_ui_draw_op',
                 'bl_ui_widget',
                 'bl_ui_label',
@@ -59,7 +63,7 @@ modulesNames = [
                 'bl_ui_drag_panel',
                 'demo_panel_op',
                 'bl_ui_widget_demo',
-               ]
+                ]
 
 for currentModuleName in modulesNames:
     if 'DEBUG_MODE' in sys.argv:
@@ -78,25 +82,28 @@ if 'DEBUG_MODE' in sys.argv:
     print(timestr, __name__ + ": registered")
     print()
     sys.argv.remove('DEBUG_MODE')
- 
+
 for currentModuleFullName in modulesFullNames.values():
     if currentModuleFullName in sys.modules:
         importlib.reload(sys.modules[currentModuleFullName])
     else:
         globals()[currentModuleFullName] = importlib.import_module(currentModuleFullName)
         setattr(globals()[currentModuleFullName], 'modulesNames', modulesFullNames)
- 
+
+
 def register():
     for currentModuleName in modulesFullNames.values():
         if currentModuleName in sys.modules:
             if hasattr(sys.modules[currentModuleName], 'register'):
                 sys.modules[currentModuleName].register()
 
+
 def unregister():
     for currentModuleName in modulesFullNames.values():
         if currentModuleName in sys.modules:
             if hasattr(sys.modules[currentModuleName], 'unregister'):
                 sys.modules[currentModuleName].unregister()
- 
+
+
 if __name__ == "__main__":
     register()

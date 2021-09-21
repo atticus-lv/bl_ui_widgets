@@ -203,7 +203,8 @@ class Reset_Coords(bpy.types.Operator):
             bpy.context.scene.get("bl_ui_panel_saved_data")["panY"] = panY
             bpy.context.scene.var.RemoVisible = False
             bpy.context.scene.var.btnRemoText = "Open Remote Control"
-        except: pass
+        except Exception as e:
+            pass
         return {'FINISHED'}
 
 # Registration
