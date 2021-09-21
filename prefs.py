@@ -16,31 +16,34 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
-#--- ### Header
-bl_info = {
-    "name": "BL UI Widgets",
-    "description": "UI Widgets to draw in the 3D view",
-    "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-    "version": (1, 0, 0),
-    "blender": (2, 80, 75),
-    "location": "View3D > viewport area",
-    "support": "COMMUNITY",
-    "category": "3D View",
-    "warning": "Version numbering diverges from Jayanam's original project",
-    "doc_url": "https://github.com/mmmrqs/bl_ui_widgets",
-    "tracker_url": "https://github.com/mmmrqs/bl_ui_widgets/issues"
-    }    
+# --- ### Header
+bl_info = {"name": "BL UI Widgets",
+           "description": "UI Widgets to draw in the 3D view",
+           "author": "Marcelo M. Marques (fork of Jayanam's original project)",
+           "version": (1, 0, 1),
+           "blender": (2, 80, 75),
+           "location": "View3D > viewport area",
+           "support": "COMMUNITY",
+           "category": "3D View",
+           "warning": "Version numbering diverges from Jayanam's original project",
+           "doc_url": "https://github.com/mmmrqs/bl_ui_widgets",
+           "tracker_url": "https://github.com/mmmrqs/bl_ui_widgets/issues"
+           }
 
-#--- ### Change log
+# --- ### Change log
 
-#v1.0.0 (09.01.2021) - by Marcelo M. Marques 
-#Added: initial creation
+# v1.0.1 (09.20.2021) - by Marcelo M. Marques
+# Chang: just some pep8 code formatting
 
-#--- ### Imports
+# v1.0.0 (09.01.2021) - by Marcelo M. Marques
+# Added: initial creation
+
+# --- ### Imports
 import bpy
 
 from bpy.types import AddonPreferences, Operator
 from bpy.props import StringProperty, IntProperty, BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty
+
 
 class BL_UI_Widget_Preferences(AddonPreferences):
     bl_idname = __package__
@@ -89,12 +92,12 @@ class BL_UI_Widget_Preferences(AddonPreferences):
     )
 
     RC_PAN_W: IntProperty(
-        name="",        
+        name="",
         description="Panel width saved on 'drag_panel_op.py'"
     )
 
     RC_PAN_H: IntProperty(
-        name="",        
+        name="",
         description="Panel height saved on 'drag_panel_op.py'"
     )
 
@@ -104,31 +107,31 @@ class BL_UI_Widget_Preferences(AddonPreferences):
             return (value * bpy.context.preferences.view.ui_scale)
         else:
             return (value)
-        
+
     def over_scale(self, value):
         over_scale = bpy.context.preferences.addons[__package__].preferences.RC_SCALE
         return (self.ui_scale(value) * over_scale)
-        
+
     def draw(self, context):
         layout = self.layout
-        
+
         split = layout.split(factor=0.45, align=True)
-        split.label(text="General scaling for panel:",icon='DECORATE')
+        split.label(text="General scaling for panel:", icon='DECORATE')
         split = split.split(factor=0.8, align=True)
         split.prop(self, "RC_UI_BIND", text=" Bound to Blender's UI")
 
         split = layout.split(factor=0.45, align=True)
-        split.label(text="User defined addon scaling:",icon='DECORATE')
+        split.label(text="User defined addon scaling:", icon='DECORATE')
         split = split.split(factor=0.4, align=True)
         split.prop(self, "RC_SCALE", text="")
-        
+
         split = layout.split(factor=0.45, align=True)
-        split.label(text="Panel sliding option:",icon='DECORATE')
+        split.label(text="Panel sliding option:", icon='DECORATE')
         split = split.split(factor=0.8, align=True)
         split.prop(self, "RC_SLIDE", text=" Move along viewport border")
 
         split = layout.split(factor=0.45, align=True)
-        split.label(text="Opening screen position:",icon='DECORATE')
+        split.label(text="Opening screen position:", icon='DECORATE')
         split = split.split(factor=0.8, align=True)
         split.prop(self, "RC_POSITION", text=" Same as in the last opened scene")
 
@@ -140,16 +143,16 @@ class BL_UI_Widget_Preferences(AddonPreferences):
             pos_x = int(round(bpy.context.scene.get("bl_ui_panel_saved_data")["panX"]))
             pos_y = int(round(bpy.context.scene.get("bl_ui_panel_saved_data")["panY"]))
             # Note: Because of the scaling logic it was necessary to make this weird correction math below
-            coords = "x: " + str(pos_x) + "    " +\
+            coords = "x: " + str(pos_x) + "    " + \
                      "y: " + str(pos_y + int(panH * (self.over_scale(1) - 1))) + "    "
-        
+
         split = layout.split(factor=0.45, align=True)
-        split.label(text="Current screen position:",icon='DECORATE')
+        split.label(text="Current screen position:", icon='DECORATE')
         splat = split.split(factor=0.4, align=True)
         splat.label(text=coords)
         splot = splat.split(factor=0.455, align=True)
         splot.operator(Reset_Coords.bl_idname)
-        
+
         layout.separator()
         box = layout.box()
         row = box.row(align=True)
@@ -165,36 +168,38 @@ class BL_UI_Widget_Preferences(AddonPreferences):
         box.label(text=" for their posts on the community forums, which have been crucial for making this addon.")
         box.label(text="")
 
+
 class Reset_Coords(bpy.types.Operator):
-    bl_idname = "object.reset_coords" 
+    bl_idname = "object.reset_coords"
     bl_label = "Reset Pos"
     bl_description = "Resets the 'Remote Control' panel screen position for this current session only.\n"\
                      "Use this button to recover the panel if it has got stuck out of the viewport area.\n"\
                      "You will need to reopen the panel for the new screen position to take effect"
+
     @classmethod
-    def poll(cls,context):
+    def poll(cls, context):
         return (not bpy.context.scene.get("bl_ui_panel_saved_data") is None)
-    
+
     def invoke(self, context, event):
         return self.execute(context)
-        
-    def execute(self,context):
+
+    def execute(self, context):
         panW = bpy.context.preferences.addons[__package__].preferences.RC_PAN_W  # Panel width
         panH = bpy.context.preferences.addons[__package__].preferences.RC_PAN_H  # Panel height
-                                             
+
         panX = 100             # Panel X coordinate, for top-left corner (some default, case it fails below)
-        panY = panH + 40 - 1   # Panel Y coordinate, for top-left corner 
-        
+        panY = panH + 40 - 1   # Panel Y coordinate, for top-left corner
+
         for area in bpy.data.screens['Layout'].areas:
             if area.type == 'VIEW_3D':
                 if bpy.context.preferences.addons[__package__].preferences.RC_UI_BIND:
                     # From Preferences/Interface/"Display"
-                    ui_scale = bpy.context.preferences.view.ui_scale  
+                    ui_scale = bpy.context.preferences.view.ui_scale
                 else:
                     ui_scale = 1
                 over_scale = bpy.context.preferences.addons[__package__].preferences.RC_SCALE
                 # Need this just because I want the panel to be centered
-                panX = int((area.width - panW*ui_scale*over_scale) / 2.0) + 1
+                panX = int((area.width - panW * ui_scale * over_scale) / 2.0) + 1
                 break
         try:
             bpy.context.preferences.addons[__package__].preferences.RC_POS_X = panX
@@ -207,14 +212,17 @@ class Reset_Coords(bpy.types.Operator):
             pass
         return {'FINISHED'}
 
+
 # Registration
 def register():
     bpy.utils.register_class(Reset_Coords)
     bpy.utils.register_class(BL_UI_Widget_Preferences)
 
+
 def unregister():
     bpy.utils.unregister_class(BL_UI_Widget_Preferences)
     bpy.utils.unregister_class(Reset_Coords)
-     
+
+
 if __name__ == '__main__':
     register()
