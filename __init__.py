@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 1),
+           "version": (1, 0, 2),
            "blender": (2, 80, 75),
            "location": "View3D > side panel ([N]), [BL_UI_Widget] tab",
            "support": "COMMUNITY",
@@ -35,6 +35,9 @@ bl_info = {"name": "BL UI Widgets",
 # Note: Because the way Blender's Preferences window displays the Addon version number,
 # I am forced to keep this file in sync with the greatest version number of all modules.
 
+# v1.0.2 (09.30.2021) - by Marcelo M. Marques
+# Chang: updated version with improvements and some clean up
+
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
 # Chang: just some pep8 code formatting
 
@@ -42,11 +45,8 @@ bl_info = {"name": "BL UI Widgets",
 # Added: initial creation
 
 # --- ### Imports
-import bpy
 import sys
 import importlib
-
-from bpy.props import *
 
 modulesFullNames = {}
 
