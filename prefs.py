@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 1),
+           "version": (1, 0, 2),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.2 (09.30.2021) - by Marcelo M. Marques
+# Chang: the logic that retrieves region.width of the 3d view screen which has the Remote Control
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
 # Chang: just some pep8 code formatting
@@ -43,6 +46,8 @@ import bpy
 
 from bpy.types import AddonPreferences, Operator
 from bpy.props import StringProperty, IntProperty, BoolProperty, EnumProperty, FloatProperty, FloatVectorProperty
+
+from . bl_ui_draw_op import get_3d_area_and_region
 
 
 class BL_UI_Widget_Preferences(AddonPreferences):
@@ -117,26 +122,26 @@ class BL_UI_Widget_Preferences(AddonPreferences):
 
         split = layout.split(factor=0.45, align=True)
         split.label(text="General scaling for panel:", icon='DECORATE')
-        split = split.split(factor=0.8, align=True)
-        split.prop(self, "RC_UI_BIND", text=" Bound to Blender's UI")
+        splat = split.split(factor=0.8, align=True)
+        splat.prop(self, 'RC_UI_BIND', text=" Bound to Blender's UI")
 
         split = layout.split(factor=0.45, align=True)
         split.label(text="User defined addon scaling:", icon='DECORATE')
-        split = split.split(factor=0.4, align=True)
-        split.prop(self, "RC_SCALE", text="")
+        splat = split.split(factor=0.4, align=True)
+        splat.prop(self, 'RC_SCALE', text="")
 
         split = layout.split(factor=0.45, align=True)
         split.label(text="Panel sliding option:", icon='DECORATE')
-        split = split.split(factor=0.8, align=True)
-        split.prop(self, "RC_SLIDE", text=" Move along viewport border")
+        splat = split.split(factor=0.8, align=True)
+        splat.prop(self, 'RC_SLIDE', text=" Move along viewport border")
 
         split = layout.split(factor=0.45, align=True)
         split.label(text="Opening screen position:", icon='DECORATE')
-        split = split.split(factor=0.8, align=True)
-        split.prop(self, "RC_POSITION", text=" Same as in the last opened scene")
+        splat = split.split(factor=0.8, align=True)
+        splat.prop(self, 'RC_POSITION', text=" Same as in the last opened scene")
 
         if bpy.context.scene.get("bl_ui_panel_saved_data") is None:
-            coords = "x: 0    " +\
+            coords = "x: 0    " + \
                      "y: 0    "
         else:
             panH = bpy.context.preferences.addons[__package__].preferences.RC_PAN_H     # Panel height
@@ -172,8 +177,8 @@ class BL_UI_Widget_Preferences(AddonPreferences):
 class Reset_Coords(bpy.types.Operator):
     bl_idname = "object.reset_coords"
     bl_label = "Reset Pos"
-    bl_description = "Resets the 'Remote Control' panel screen position for this current session only.\n"\
-                     "Use this button to recover the panel if it has got stuck out of the viewport area.\n"\
+    bl_description = "Resets the 'Remote Control' panel screen position for this current session only.\n" \
+                     "Use this button to recover the panel if it has got stuck out of the viewport area.\n" \
                      "You will need to reopen the panel for the new screen position to take effect"
 
     @classmethod
@@ -186,21 +191,20 @@ class Reset_Coords(bpy.types.Operator):
     def execute(self, context):
         panW = bpy.context.preferences.addons[__package__].preferences.RC_PAN_W  # Panel width
         panH = bpy.context.preferences.addons[__package__].preferences.RC_PAN_H  # Panel height
-
         panX = 100             # Panel X coordinate, for top-left corner (some default, case it fails below)
         panY = panH + 40 - 1   # Panel Y coordinate, for top-left corner
 
-        for area in bpy.data.screens['Layout'].areas:
-            if area.type == 'VIEW_3D':
-                if bpy.context.preferences.addons[__package__].preferences.RC_UI_BIND:
-                    # From Preferences/Interface/"Display"
-                    ui_scale = bpy.context.preferences.view.ui_scale
-                else:
-                    ui_scale = 1
-                over_scale = bpy.context.preferences.addons[__package__].preferences.RC_SCALE
-                # Need this just because I want the panel to be centered
-                panX = int((area.width - panW * ui_scale * over_scale) / 2.0) + 1
-                break
+        # Here the region is used instead of area because data is retrieved from bpy.data.screens['Layout']
+        region = get_3d_area_and_region(prefs=True)[1]
+        if region:
+            if bpy.context.preferences.addons[__package__].preferences.RC_UI_BIND:
+                # From Preferences/Interface/"Display"
+                ui_scale = bpy.context.preferences.view.ui_scale
+            else:
+                ui_scale = 1
+            over_scale = bpy.context.preferences.addons[__package__].preferences.RC_SCALE
+            # Need this just because I want the panel to be centered
+            panX = int((region.width - (panW * ui_scale * over_scale)) / 2.0) + 1
         try:
             bpy.context.preferences.addons[__package__].preferences.RC_POS_X = panX
             bpy.context.preferences.addons[__package__].preferences.RC_POS_Y = panY
