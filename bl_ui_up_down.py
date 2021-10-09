@@ -1,3 +1,45 @@
+# ##### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
+# --- ### Header
+bl_info = {"name": "BL UI Widgets",
+           "description": "UI Widgets to draw in the 3D view",
+           "author": "Jayanam",
+           "version": (0, 6, 4),
+           "blender": (2, 80, 75),
+           "location": "View3D > viewport area",
+           "support": "COMMUNITY",
+           "category": "3D View",
+           "warning": "Version numbering diverges from Jayanam's original project",
+           "doc_url": "https://github.com/mmmrqs/bl_ui_widgets",
+           "tracker_url": "https://github.com/mmmrqs/bl_ui_widgets/issues"
+           }
+
+# --- ### Change log
+
+# (09.30.2021) - by Marcelo M. Marques
+# Added: License, header and warning message.
+
+### \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ ###
+### :WARNING: This is the original version and may not be fully compatible with the enhanced BL_UI_Widgets Kit ###
+### /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\ ###
+
+
 from . bl_ui_widget import *
 
 import blf
