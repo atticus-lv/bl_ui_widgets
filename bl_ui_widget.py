@@ -32,7 +32,7 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
-# v1.0.2 (09.30.2021) - by Marcelo M. Marques
+# v1.0.2 (10.31.2021) - by Marcelo M. Marques
 # Added: 'valid_modes' property to indicate the 'bpy.context.mode' valid values for displaying the panel.
 # Added: 'init_mode' function to allow the 'bl_ui_slider' subclass to call it without triggering an update from the former 'init' function.
 # Chang: How we determine whether the user has moved out of the valid area/region, now using the 'valid_display_mode()' function.
@@ -40,7 +40,7 @@ bl_info = {"name": "BL UI Widgets",
 # Chang: 'handle_event' function to rely on area and region values retrieved by 'get_3d_area_and_region()'. Also replaced the event's
 #         mouse_region_x|y by calculated values using mouse_x|y and region.x|y because the former mouse_region_x|y stopped working
 #         after the change on 'bl_ui_draw_op.invoke' method which switches the workspace back and forth.
-# Chang: improved reliability on 'timer_event', 'mouse_down', 'mouse_move', 'mouse_up', 'mouse_enter' and 'mouse_exit' overridable 
+# Chang: improved reliability on 'timer_event', 'mouse_down', 'mouse_move', 'mouse_up', 'mouse_enter' and 'mouse_exit' overridable
 #         functions by conditioning the returned value
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques

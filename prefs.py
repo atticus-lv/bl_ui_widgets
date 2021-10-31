@@ -32,7 +32,7 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
-# v1.0.2 (09.30.2021) - by Marcelo M. Marques
+# v1.0.2 (10.31.2021) - by Marcelo M. Marques
 # Chang: the logic that retrieves region.width of the 3d view screen which has the Remote Control
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
@@ -194,7 +194,6 @@ class Reset_Coords(bpy.types.Operator):
         panX = 100             # Panel X coordinate, for top-left corner (some default, case it fails below)
         panY = panH + 40 - 1   # Panel Y coordinate, for top-left corner
 
-        # Here the region is used instead of area because data is retrieved from bpy.data.screens['Layout']
         region = get_3d_area_and_region(prefs=True)[1]
         if region:
             if bpy.context.preferences.addons[__package__].preferences.RC_UI_BIND:

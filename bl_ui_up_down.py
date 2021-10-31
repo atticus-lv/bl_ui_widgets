@@ -32,7 +32,7 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
-# (09.30.2021) - by Marcelo M. Marques
+# (10.31.2021) - by Marcelo M. Marques
 # Added: License, header and warning message.
 
 ### \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/ ###
