@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 1),
+           "version": (1, 0, 2),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,11 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.2 (09.25.2022) - by Marcelo M. Marques
+# Added: 'quadview' property to indicate whether panel is opened in the QuadView mode or not
+# Chang: Logic to save panel screen position only when not in QuadView mode. In some future release this may get improved
+#        to save the position in both cases, but to distinct sets of variables in the session's saved data dictionary
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
 # Chang: just some pep8 code formatting
@@ -105,6 +110,7 @@ class BL_UI_Drag_Panel(BL_UI_Patch):
         self._has_shadow = False                # Indicates whether a shadow must be drawn around the panel
 
         self._anchored = False                  # Indicates whether panel can be dragged around the viewport or not
+        self._quadview = False                  # Indicates whether panel is opened in the QuadView mode or not
 
         self.__drag_offset_x = 0
         self.__drag_offset_y = 0
@@ -117,6 +123,14 @@ class BL_UI_Drag_Panel(BL_UI_Patch):
     @anchored.setter
     def anchored(self, value):
         self._anchored = value
+
+    @property
+    def quadview(self):
+        return self._quadview
+
+    @quadview.setter
+    def quadview(self, value):
+        self._quadview = value
 
     def add_widget(self, widget):
         self.widgets.append(widget)
@@ -137,7 +151,9 @@ class BL_UI_Drag_Panel(BL_UI_Patch):
         return False
 
     def save_panel_coords(self, x, y):
-        # Update the new coord values in the session's saved data dictionary.
+        # Update the new coord values in the session's saved data dictionary, only when not in QuadView mode
+        if self.quadview:
+            return None
         # Note: Because of the scaling logic it was necessary to make this weird correction math below
         new_x = self.over_scale(x)
         new_y = self.over_scale(y)
@@ -172,13 +188,13 @@ class BL_UI_Drag_Panel(BL_UI_Patch):
 
     # Overrides base class function
     def mouse_down(self, event, x, y):
-        if self.child_widget_focused(x, y):
-            # Means the focus is on some sub-widget (e.g.: a button)
-            return False
         if self.anchored:
             # Means the panel is not draggable
             return False
         if self.is_in_rect(x, y):
+            if self.child_widget_focused(x, y):
+                # Means the focus is on some sub-widget (e.g.: a button)
+                return False
             # When panel is disabled, just ignore the click
             if self._is_enabled:
                 height = self.get_area_height()

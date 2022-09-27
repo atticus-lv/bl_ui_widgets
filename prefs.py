@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 2),
+           "version": (1, 0, 3),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -32,14 +32,17 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
+# v1.0.3 (09.25.2022) - by Marcelo M. Marques
+# Chang: Just small updates in some comments on the code
+
 # v1.0.2 (10.31.2021) - by Marcelo M. Marques
-# Chang: the logic that retrieves region.width of the 3d view screen which has the Remote Control
+# Chang: The logic that retrieves region.width of the 3d view screen which has the Remote Control
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
-# Chang: just some pep8 code formatting
+# Chang: Just some pep8 code formatting
 
 # v1.0.0 (09.01.2021) - by Marcelo M. Marques
-# Added: initial creation
+# Added: Initial creation
 
 # --- ### Imports
 import bpy
@@ -86,13 +89,13 @@ class BL_UI_Widget_Preferences(AddonPreferences):
 
     RC_POS_X: IntProperty(
         name="",
-        description="Remote Control panel position X from latest opened scene",
+        description="Remote Control panel position 'X' from latest opened scene",
         default=-10000
     )
 
     RC_POS_Y: IntProperty(
         name="",
-        description="Remote Control panel position Y from latest opened scene",
+        description="Remote Control panel position 'Y' from latest opened scene",
         default=-10000
     )
 
@@ -147,7 +150,7 @@ class BL_UI_Widget_Preferences(AddonPreferences):
             panH = bpy.context.preferences.addons[__package__].preferences.RC_PAN_H     # Panel height
             pos_x = int(round(bpy.context.scene.get("bl_ui_panel_saved_data")["panX"]))
             pos_y = int(round(bpy.context.scene.get("bl_ui_panel_saved_data")["panY"]))
-            # Note: Because of the scaling logic it was necessary to make this weird correction math below
+            # Note: Because of the scaling logic it was necessary to do this weird math correction below
             coords = "x: " + str(pos_x) + "    " + \
                      "y: " + str(pos_y + int(panH * (self.over_scale(1) - 1))) + "    "
 
@@ -165,7 +168,7 @@ class BL_UI_Widget_Preferences(AddonPreferences):
         box.label(text=" Additional information and Acknowledge:")
         box.label(text="")
         box.label(text=" - This addon prepared and packaged by Marcelo M Marques (mmmrqs@gmail.com)")
-        box.label(text="   (upgrades at https://github.com/mmmrqs/bl_ui_widgets)")
+        box.label(text="   (updates at https://github.com/mmmrqs/bl_ui_widgets)")
         box.label(text=" - BL UI Widgets original project by Jayanam (jayanam.games@gmail.com)")
         box.label(text="   (download it from https://github.com/jayanam/bl_ui_widgets)")
         box.label(text="")
@@ -209,6 +212,8 @@ class Reset_Coords(bpy.types.Operator):
             bpy.context.preferences.addons[__package__].preferences.RC_POS_Y = panY
             bpy.context.scene.get("bl_ui_panel_saved_data")["panX"] = panX
             bpy.context.scene.get("bl_ui_panel_saved_data")["panY"] = panY
+            # These two next statements cause the remote panel to be closed by the BL_UI_OT_draw_operator modal class
+            # and changes the operator's label on the N-Panel UI accordingly to indicate panel can be opened again.
             bpy.context.scene.var.RemoVisible = False
             bpy.context.scene.var.btnRemoText = "Open Remote Control"
         except Exception as e:

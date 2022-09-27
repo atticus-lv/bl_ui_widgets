@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 2),
+           "version": (1, 0, 3),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -32,15 +32,21 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
+# v1.0.3 (09.25.2022) - by Marcelo M. Marques
+# Added: 'is_editable' property to indicate if, for the 'NUMBER_SLIDE' style, the user is allowed to change the value by text editing.
+# Chang: 'slider_mouse_up_func' function to prevent text editing per property documented above, and gave more flexibility to its logic by 
+#        adding calls to both the 'value_changed_func' and 'update_self_value' functions so user has a final chance to override the changes.
+# Fixed: Small issue in the 'calc_slider_bar' function that in some cases would return a float value when an integer was expected.
+
 # v1.0.2 (10.31.2021) - by Marcelo M. Marques
 # Added: 'valid_modes' parm in the 'init' function and a call to 'super().init_mode' so we get everything correctly initialized.
-# Chang: improved reliability on 'mouse_exit' and 'button_mouse_down' overridable functions by conditioning the returned value
+# Chang: Improved reliability on 'mouse_exit' and 'button_mouse_down' overridable functions by conditioning the returned value.
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
-# Chang: just some pep8 code formatting
+# Chang: Just some pep8 code formatting.
 
 # v1.0.0 (09.01.2021) - by Marcelo M. Marques
-# Added: Logic to scale the slider according to both Blender's ui scale configuration and this addon 'preferences' setup
+# Added: Logic to scale the slider according to both Blender's ui scale configuration and this addon 'preferences' setup.
 # Added: 'outline_color' property to allow different color on the slider outline (value is standard color tuple).
 # Added: 'roundness' property to allow the slider to be painted with rounded corners,
 #         same as that property available in Blender's user themes and it works together with 'rounded_corners' below.
@@ -101,6 +107,7 @@ class BL_UI_Slider(BL_UI_Patch):
         self._step = 1                          # Step size to increase/decrease the displayed value (in precision units)
         self._unit = ""                         # Unit indicator for the displayed value
         self._max_input_chars = 20              # Maximum number of characters to be input by the textbox
+        self._is_editable = True                # Indicates whether the value can be changed by text editing
 
         self._text_margin = 16                  # Slider text left/right margins (when 'NOT' in Textbox edit mode)
         self._text_size = None                  # Slider text size
@@ -355,6 +362,14 @@ class BL_UI_Slider(BL_UI_Patch):
         self._max_input_chars = value
 
     @property
+    def is_editable(self):
+        return self._is_editable
+
+    @is_editable.setter
+    def is_editable(self, value):
+        self._is_editable = value
+
+    @property
     def text(self):
         return self._text
 
@@ -463,7 +478,7 @@ class BL_UI_Slider(BL_UI_Patch):
         str_value = str_value[:len(str_value) - 2] if str_value[-2:] == ".0" else str_value
         return str_value
 
-    def update_self_value(self, value, mode):
+    def update_self_value(self, value, mode='DEFAULT'):
         update_value = value
         if self._min_value is not None:
             update_value = self._min_value if update_value < self._min_value else update_value
@@ -496,7 +511,7 @@ class BL_UI_Slider(BL_UI_Patch):
             percentage = 0 if percentage < 0 else percentage
             percentage = 1 if percentage > 1 else percentage
         slider_bar_width = int(round(self.slider.width * percentage))
-        slider_bar_pos_x = self.over_scale(self.slider.x_screen + slider_bar_width - 1)
+        slider_bar_pos_x = int(self.over_scale(self.slider.x_screen + slider_bar_width - 1))
         return [slider_bar_width, slider_bar_pos_x]
 
     # Overrides base class function
@@ -906,6 +921,13 @@ class BL_UI_Slider(BL_UI_Patch):
     def slider_mouse_up_func(self, widget, event, x, y):
         self.__is_dragging = False
         if self.__mouse_moved:
+            if self._style == 'NUMBER_SLIDE':
+                # Calls user function to give it a chance to override the changes
+                self.value_changed_func(self, self._value)
+                self.update_self_value(self._value)
+            # Indicates that sliding mode has finished
+            self.set_exclusive_mode(None)
+        elif not self._is_editable:
             # Indicates that sliding mode has finished
             self.set_exclusive_mode(None)
         else:

@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques",
-           "version": (1, 0, 1),
+           "version": (1, 0, 2),
            "blender": (2, 80, 75),
            "location": "View3D > side panel ([N]), [BL_UI_Widget] tab",
            "support": "COMMUNITY",
@@ -32,6 +32,12 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
+# v1.0.2 (09.25.2022) - by Marcelo M. Marques
+# Added: 'is_quadview_region' function to identify whether screen is in QuadView mode and if yes to return the corresponding area and region.
+# Added: 'btnRemoTime' session variable to hold the clock time which is constantly updated by the 'terminate_execution' function in demo_panel_op.py
+#        so that the N-panel is more precisely informed about the remote panel status when it has to determine how to display the Open/Close button.
+# Added: Logic to the 'execute' method of the Set_Demo_Panel class for better displaying the Open/Close button, per item described above.
+
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
 # Chang: just some pep8 code formatting
 
@@ -40,7 +46,20 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Imports
 import bpy
-from bpy.props import StringProperty, BoolProperty
+import time
+
+from bpy.props import StringProperty, IntProperty, BoolProperty
+
+# --- ### Helper functions
+def is_quadview_region(context):
+    """ Identifies whether screen is in QuadView mode and if yes returns the corresponding area and region
+    """
+    for area in context.screen.areas:
+        if area.type == 'VIEW_3D':
+            if len(area.spaces.active.region_quadviews) > 0:
+                region = [region for region in area.regions if region.type == 'WINDOW'][3]
+                return (True, area, region)
+    return (False, None, None)
 
 
 # --- ### Properties
@@ -53,6 +72,7 @@ class Variables(bpy.types.PropertyGroup):
     OpState6: bpy.props.BoolProperty(default=False)
     RemoVisible: bpy.props.BoolProperty(default=False)
     btnRemoText: bpy.props.StringProperty(default="Open Demo Panel")
+    btnRemoTime: IntProperty(default=0)
 
 
 def is_desired_mode(context=None):
@@ -64,8 +84,10 @@ def is_desired_mode(context=None):
             'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_TEXT', 'EDIT_ARMATURE', 'EDIT_METABALL',
             'EDIT_LATTICE', 'POSE', 'SCULPT', 'PAINT_WEIGHT', 'PAINT_VERTEX', 'PAINT_TEXTURE', 'PARTICLE',
             'OBJECT', 'PAINT_GPENCIL', 'EDIT_GPENCIL', 'SCULPT_GPENCIL', 'WEIGHT_GPENCIL',
-       Additional desired mode option (as of Blender 2.9):
+       Additional valid mode option (as of Blender 2.9):
             'VERTEX_GPENCIL'
+       Additional valid mode options (as of Blender 3.2):
+            'EDIT_CURVES', 'SCULPT_CURVES'
     """
     desired_modes = ['OBJECT', 'EDIT_MESH', 'POSE', ]
     if context:
@@ -90,13 +112,20 @@ class Set_Demo_Panel(bpy.types.Operator):
         return self.execute(context)
 
     def execute(self, context):
-        if context.scene.var.RemoVisible:
-            context.scene.var.btnRemoText = "Open Demo Panel"
+        if context.scene.var.RemoVisible and int(time.time()) - context.scene.var.btnRemoTime <= 1:
+            context.scene.var.btnRemoText = "Open Remote Control"
+            context.scene.var.RemoVisible = False
         else:
-            context.scene.var.btnRemoText = "Close Demo Panel"
-            context.scene.var.objRemote = bpy.ops.object.dp_ot_draw_operator('INVOKE_DEFAULT')
-
-        context.scene.var.RemoVisible = not context.scene.var.RemoVisible
+            context.scene.var.btnRemoText = "Close Remote Control"
+            context.scene.var.RemoVisible = True
+            is_quadview, area, region = is_quadview_region(context)
+            if is_quadview:
+                override = bpy.context.copy()
+                override["area"] = area
+                override["region"] = region
+                context.scene.var.objRemote = bpy.ops.object.dp_ot_draw_operator(override, 'INVOKE_DEFAULT')
+            else:    
+                context.scene.var.objRemote = bpy.ops.object.dp_ot_draw_operator('INVOKE_DEFAULT')
         return {'FINISHED'}
 
 
@@ -112,8 +141,13 @@ class OBJECT_PT_Demo(bpy.types.Panel):
 
     def draw(self, context):
         if context.space_data.type == 'VIEW_3D' and is_desired_mode():
+            remoteVisible = (context.scene.var.RemoVisible and int(time.time()) - context.scene.var.btnRemoTime <= 1)
             # -- remote control switch button
-            op = self.layout.operator(Set_Demo_Panel.bl_idname, text=context.scene.var.btnRemoText)
+            if remoteVisible:
+                op = self.layout.operator(Set_Demo_Panel.bl_idname, text="Close Remote Control")
+            else:
+                # Make sure the button starts turned off every time
+                op = self.layout.operator(Set_Demo_Panel.bl_idname, text="Open Remote Control")
         return None
 
 

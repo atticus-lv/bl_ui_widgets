@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 2),
+           "version": (1, 0, 3),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,10 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.3 (09.25.2021) - by Marcelo M. Marques
+# Added: Many improvements to help with identifying when the panel must be automatically terminated either due to a change
+#        in region or for any other issues.  These changes may help with making the code more stable and reliable.
 
 # v1.0.2 (10.31.2021) - by Marcelo M. Marques
 # Added: 'region_pointer' class level property to indicate the region in which the drag_panel operator instance has been invoked().
@@ -79,8 +83,8 @@ class BL_UI_OT_draw_operator(Operator):
     def __init__(self):
         self.widgets = []
         self.valid_modes = []
-        # self.__draw_handle = None  # <-- Was like this before implementing the 'lost handler detection logic'
-        # self.__draw_events = None  #     (ditto)
+        # self.__draw_handle = None  # <-- Was like this before I had implemented the 'lost handler detection logic'
+        # self.__draw_events = None  # <--(ditto)
         self.__finished = False
         self.__informed = False
 
@@ -120,9 +124,9 @@ class BL_UI_OT_draw_operator(Operator):
         # Avoid "internal error: modal gizmo-map handler has invalid area" terminal messages, after maximizing the viewport,
         # by switching the workspace back and forth. Not pretty, but at least it avoids the terminal output getting spammed.
         current = context.workspace
-        other = [ws for ws in bpy.data.workspaces if ws != current]
-        if other:
-            bpy.context.window.workspace = other[0]
+        others = [ws for ws in bpy.data.workspaces if ws != current]
+        if others:
+            bpy.context.window.workspace = others[0]
             bpy.context.window.workspace = current
         # -----------------------------------------------------------------
         BL_UI_OT_draw_operator.region_pointer = context.region.as_pointer()
@@ -165,7 +169,7 @@ class BL_UI_OT_draw_operator(Operator):
             if self.handle_widget_events(event, area, region):
                 return {'RUNNING_MODAL'}
 
-        # Not using this escape option, but left it here for documentation purpose
+        # Not using any escape option, but left it here for documentation purposes
         # if event.type in {"ESC"}:
             # self.finish()
 
@@ -178,18 +182,24 @@ class BL_UI_OT_draw_operator(Operator):
             self.finish()
             valid = False
         elif not (area and region):
+            if self.terminate_execution(area, region, event):
+                self.finish()
             # Return but do not finish
             valid = False
-        elif self.terminate_execution(area, region):
+        elif self.terminate_execution(area, region, event):
             area.tag_redraw()
             self.finish()
             valid = False
         elif event.type != 'TIMER':
             # Check whether it is drawing on the same region where the panel was initially opened
-            mouse_region = get_quadview_index(context, event.mouse_x, event.mouse_y)[0]
-            if mouse_region is None or mouse_region.as_pointer() != self.get_region_pointer():
-                # Not the same region, so skip handling events at this time
+            mouse_region, abend = get_region(context, event.mouse_x, event.mouse_y)
+            if abend:
+                self.finish()
                 valid = False
+            else:    
+                if mouse_region is None or mouse_region.as_pointer() != self.get_region_pointer():
+                    # Not the same region, so skip handling events at this time, but do not finish
+                    valid = False
         return (valid, area, region)
 
     def handle_widget_events(self, event, area, region):
@@ -216,7 +226,7 @@ class BL_UI_OT_draw_operator(Operator):
         # This might be overriden by one same named function in the derived (child) class
         return False
 
-    def terminate_execution(self, area, region):
+    def terminate_execution(self, area, region, event):
         # This might be overriden by one same named function in the derived (child) class
         return False
 
@@ -231,27 +241,31 @@ class BL_UI_OT_draw_operator(Operator):
         self.unregister_handlers(bpy.context)
         self.on_finish(bpy.context)
 
+    def cancel(self, context):
+        # Called when Blender cancels the modal operator
+        self.finish()
+        
     # Draw handler to paint onto the screen
     def draw_callback_px(self, op, context):
         # Check whether handles are still valid
         if not BL_UI_OT_draw_operator.valid_handler():
-            # -- personalized criteria for the Remote Control panel addon --
-            # This is a temporary workaround till I figure out how to signal to
-            # the N-panel coding that the remote control panel has been finished.
-            bpy.context.scene.var.RemoVisible = False
-            bpy.context.scene.var.btnRemoText = "Open Remote Control"
-            # -- end of the personalized criteria for the given addon --
+            try:
+                # -- personalized criteria for the Remote Control panel addon --
+                # This is a temporary workaround till I figure out how to signal to
+                # the N-panel coding that the remote control panel has been finished.
+                bpy.context.scene.var.RemoVisible = False
+                bpy.context.scene.var.btnRemoText = "Open Remote Control"
+                # -- end of the personalized criteria for the given addon --
+            except:
+                pass
             return
-
         # Check whether it is drawing on the same region where the panel was initially opened
-        for region in context.area.regions:
-            if region.type == 'WINDOW':
-                if context.region == region:
-                    if region.as_pointer() != self.get_region_pointer():
-                        # Not the same region, so skip drawing there
-                        return
-                    break
-
+        for region in [region for region in context.area.regions if region.type == 'WINDOW']:
+            if context.region == region:
+                if region.as_pointer() != self.get_region_pointer():
+                    # Not the same region, so skip drawing there
+                    return
+                break
         # This is to detect when user moved into an undesired 'bpy.context.mode'
         # and it will check also the programmer's defined suppress_rendering function
         if valid_display_mode(self.valid_modes, self.suppress_rendering):
@@ -261,22 +275,26 @@ class BL_UI_OT_draw_operator(Operator):
 
 # --- ### Helper functions
 
-def get_quadview_index(context, x, y):
-    for area in context.screen.areas:
-        if area.type != 'VIEW_3D':
-            continue
-        is_quadview = (len(area.spaces.active.region_quadviews) == 0)
-        i = -1
-        for region in area.regions:
-            if region.type == 'WINDOW':
-                i += 1
+def get_region(context, x, y):
+    abend = False
+    try:
+        for area in [area for area in context.screen.areas if area.type == 'VIEW_3D']:
+            for region in [region for region in area.regions if region.type == 'WINDOW']:
                 if (x >= region.x and
                     y >= region.y and
                     x < region.width + region.x and
                     y < region.height + region.y):
-                    return (region, area.spaces.active, None if is_quadview else i)
-    return (None, None, None)
-
+                    return (region, abend)
+    except Exception as e:
+        if __package__.find(".") != -1:
+            package = __package__[0:__package__.find(".")]
+        else:
+            package = __package__
+        print("**WARNING** " + package + " addon issue:")
+        print("  +--> unexpected result in 'get_region' function of bl_ui_draw_op.py module!")
+        print("       " + e)
+        abend = True
+    return (None, abend)
 
 def get_3d_area_and_region(prefs=None):
     abend = False
@@ -303,14 +321,12 @@ def get_3d_area_and_region(prefs=None):
         #             if region.type == 'WINDOW':
         #                 if region.as_pointer() == BL_UI_OT_draw_operator.region_pointer:
         #                     return (area, region, abend)
-
+        #
         for screen in bpy.data.screens:
-            for area in screen.areas:
-                if area.type == 'VIEW_3D':
-                    for region in area.regions:
-                        if region.type == 'WINDOW':
-                            if region.as_pointer() == BL_UI_OT_draw_operator.region_pointer:
-                                return (area, region, abend)
+            for area in [area for area in screen.areas if area.type == 'VIEW_3D']:
+                for region in [region for region in area.regions if region.type == 'WINDOW']:
+                    if region.as_pointer() == BL_UI_OT_draw_operator.region_pointer:
+                        return (area, region, abend)
     except Exception as e:
         if __package__.find(".") != -1:
             package = __package__[0:__package__.find(".")]

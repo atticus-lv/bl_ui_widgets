@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 2),
+           "version": (1, 0, 3),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,15 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.3 (09.25.2022) - by Marcelo M. Marques
+# Added: Logic to 'on_invoke' function to identify when in QuadView mode and to position the remote panel appropriately so it 
+#        does not get stuck lost out of visible region.
+# Added: New statement necessary for the remote panel to stay open when called by Blender's <F3> menu.
+# Added: Logic to 'terminate_execution' function to automatically close the panel if user switches between regular and QuadView display modes.
+# Added: Logic to 'terminate_execution' function to keep a session variable updated with the clock time that will allow the modal operator
+#        to identify any odd situation in which the panel is no more active and must be automatically closed.
+# Chang: Some notes and comments for better documentation
 
 # v1.0.2 (10.31.2021) - by Marcelo M. Marques
 # Added: 'valid_modes' property to indicate the 'bpy.context.mode' valid values for displaying the panel.
@@ -46,6 +55,7 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Imports
 import bpy
+import time
 import os
 
 from bpy.types import Operator
@@ -60,6 +70,8 @@ from .bl_ui_tooltip import BL_UI_Tooltip
 from .bl_ui_draw_op import BL_UI_OT_draw_operator
 from .bl_ui_drag_panel import BL_UI_Drag_Panel
 
+from .bl_ui_widget_demo import is_quadview_region
+
 
 class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
     bl_idname = "object.dp_ot_draw_operator"
@@ -67,7 +79,7 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
     bl_description = "Operator for bl ui widgets"
     bl_options = {'REGISTER'}
 
-    # -- Blender interface methods quick documentation --
+    # --- Blender interface methods quick documentation
     # def poll: checked before running the operator, which will never run when poll fails.
     #           used to check if an operator can run, menu items will be greyed out and if key bindings should be ignored.
     #
@@ -76,7 +88,7 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
     #
     # def description: allows a dynamic tooltip that changes based on the context and operator parameters.
     #
-    # def draw: called to draw options, giving  control over the layout. Without this, options will draw in the order they are defined.
+    # def draw: called to draw options, giving control over the layout. Without this, options will draw in the order they are defined.
     #
     # def modal: handles events which would normally access other operators, they keep running until they return FINISHED.
     #            used for operators which continuously run, eg: fly mode, knife tool, circle select are all examples of modal operators.
@@ -107,12 +119,13 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
         # Possible valid mode options (as of Blender 2.8):
         #   'EDIT_MESH', 'EDIT_CURVE', 'EDIT_SURFACE', 'EDIT_TEXT', 'EDIT_ARMATURE', 'EDIT_METABALL',
         #   'EDIT_LATTICE', 'POSE', 'SCULPT', 'PAINT_WEIGHT', 'PAINT_VERTEX', 'PAINT_TEXTURE', 'PARTICLE',
-        #   'OBJECT', 'PAINT_GPENCIL', 'EDIT_GPENCIL', 'SCULPT_GPENCIL', 'WEIGHT_GPENCIL',
+        #   'OBJECT', 'PAINT_GPENCIL', 'EDIT_GPENCIL', 'SCULPT_GPENCIL', 'WEIGHT_GPENCIL'
         # Additional valid mode option (as of Blender 2.9):
         #   'VERTEX_GPENCIL'
-        #
-        # Note: Leave it empty, e.g. self.valid_modes = {}, for no restriction to be applied.
-
+        # Additional valid mode options (as of Blender 3.2):
+        #   'EDIT_CURVES', 'SCULPT_CURVES'
+        
+        # Note: Leave it empty, e.g. self.valid_modes = {}, for no restrictions to be applied.
         self.valid_modes = {'OBJECT', 'EDIT_MESH'}
 
         # From Preferences/Themes/User Interface/"State"
@@ -122,8 +135,8 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
         status_color = tuple(widget_style.inner_changed) + (0.3,)
 
         btnC = 0            # Element counter
-        btnS = 4            # Button separation (for the smaller ones)
-        btnG = 0            # Button gap (for the bigger ones)
+        btnS = 4            # Button separation (for the smallest ones)
+        btnG = 0            # Button gap (for the biggest ones)
         btnW = 56           # Button width
         btnH = 40 + btnS    # Button height (takes 2 small buttons plus their separation)
 
@@ -142,7 +155,7 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
         self.button1.rounded_corners = (1, 1, 0, 0)
         self.button1.set_mouse_up(self.button1_click)
         self.button1.set_button_pressed(self.button1_pressed)
-        self.button1.description = "Press this button to unlock its brothers (after the button" + \
+        self.button1.description = "Press this button to unlock its brothers (after the button " + \
                                    "with a 'LOCK' caption has been pressed). {Let me " + \
                                    "type a very large description here to showcase a " + \
                                    "tooltip text automatically being wrapped around " + \
@@ -351,7 +364,28 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
 
         self.panel.add_widgets(widgets_items)
 
-        self.panel.set_location(self.panel.x, self.panel.y)
+        self.panel.quadview, _, region = is_quadview_region(context)
+
+        if self.panel.quadview and region:
+            # When in QuadView mode it has to be manually repositioned otherwise may get stuck out of region space
+            if __package__.find(".") != -1:
+                package = __package__[0:__package__.find(".")]
+            else:
+                package = __package__
+            if bpy.context.preferences.addons[package].preferences.RC_UI_BIND:
+                # From Preferences/Interface/"Display"
+                ui_scale = bpy.context.preferences.view.ui_scale
+            else:
+                ui_scale = 1
+            over_scale = bpy.context.preferences.addons[package].preferences.RC_SCALE
+            panX = int((region.width - (self.panel.width * ui_scale * over_scale)) / 2.0) + 1
+            panY = self.panel.height + 10 - 1  # The '10' is just a spacing from region border
+            self.panel.set_location(panX, panY)
+        else:
+            self.panel.set_location(self.panel.x, self.panel.y)
+            
+        # This statement is necessary so that the remote panel stays open when called by Blender's <F3> menu
+        bpy.context.scene.var.RemoVisible = True    
 
     # -- Helper function
 
@@ -364,13 +398,28 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
         '''
         return False
 
-    def terminate_execution(self, area, region):
+    def terminate_execution(self, area, region, event):
         '''
             This is a special case 'overriding function' to allow subclass control for terminating/closing the panel.
             Function is defined in class BL_UI_OT_draw_operator (bl_ui_draw_op.py) and available to be inherited here.
             If not included here the function in the superclass just returns 'False' and no termination is executed.
             When 'True" is returned below, the execution is auto terminated and the 'Remote Control' panel closes itself.
         '''
+        if self.panel.quadview and area is None:
+            bpy.context.scene.var.RemoVisible = False
+        else:
+            if area.type == 'VIEW_3D':
+                # If user switches between regular and QuadView display modes, the panel is automatically closed
+                is_quadview = (len(area.spaces.active.region_quadviews) > 0)
+                if self.panel.quadview != is_quadview:
+                    bpy.context.scene.var.RemoVisible = False
+
+        if event.type == 'TIMER' and bpy.context.scene.var.RemoVisible:
+            # Update the remote panel "clock marker". This marker is used to keep track if the remote panel is
+            # actually opened and active. In the case that bpy.context.scene.var.RemoVisible state gets misleading
+            # the panel will be automatically closed when this clock marker has not been updated for more than 1 sec
+            bpy.context.scene.var.btnRemoTime = int(time.time())
+            
         return (not bpy.context.scene.var.RemoVisible)
 
     # -- Button press handlers
