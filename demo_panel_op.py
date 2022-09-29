@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 3),
+           "version": (1, 0, 4),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.4 (09.28.2022) - by Marcelo M. Marques
+# Added: Logic to 'poll' classmethod that prevents the panel to be opened in multiple simultaneous instances.
 
 # v1.0.3 (09.25.2022) - by Marcelo M. Marques
 # Added: Logic to 'on_invoke' function to identify when in QuadView mode and to position the remote panel appropriately so it 
@@ -102,7 +105,15 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
     @classmethod
     def poll(cls, context):
         # Show this panel in View_3D only
-        return (context.space_data.type == 'VIEW_3D')
+        if context.space_data.type != 'VIEW_3D':
+            return False
+        # Prevents multiple instances of panel
+        try:
+            if context.scene.var.RemoVisible and int(time.time()) - context.scene.var.btnRemoTime <= 1:
+                return False
+        except:
+            return False
+        return True
 
     def __init__(self):
 
@@ -405,14 +416,18 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
             If not included here the function in the superclass just returns 'False' and no termination is executed.
             When 'True" is returned below, the execution is auto terminated and the 'Remote Control' panel closes itself.
         '''
+        '''
+            BEWARE THAT ARGUMENTS 'AREA' AND/OR 'REGION' CAN BE EQUAL TO "NONE"
+        '''
         if self.panel.quadview and area is None:
             bpy.context.scene.var.RemoVisible = False
         else:
-            if area.type == 'VIEW_3D':
-                # If user switches between regular and QuadView display modes, the panel is automatically closed
-                is_quadview = (len(area.spaces.active.region_quadviews) > 0)
-                if self.panel.quadview != is_quadview:
-                    bpy.context.scene.var.RemoVisible = False
+            if not area is None:
+                if area.type == 'VIEW_3D':
+                    # If user switches between regular and QuadView display modes, the panel is automatically closed
+                    is_quadview = (len(area.spaces.active.region_quadviews) > 0)
+                    if self.panel.quadview != is_quadview:
+                        bpy.context.scene.var.RemoVisible = False
 
         if event.type == 'TIMER' and bpy.context.scene.var.RemoVisible:
             # Update the remote panel "clock marker". This marker is used to keep track if the remote panel is

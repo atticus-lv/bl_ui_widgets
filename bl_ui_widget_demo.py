@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques",
-           "version": (1, 0, 2),
+           "version": (1, 0, 3),
            "blender": (2, 80, 75),
            "location": "View3D > side panel ([N]), [BL_UI_Widget] tab",
            "support": "COMMUNITY",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.3 (09.28.2022) - by Marcelo M. Marques
+# Fixed: issue with a 'context is incorrect' situation that would be caused by user calling 'Set_Demo_Panel' repeatedly and too fast
 
 # v1.0.2 (09.25.2022) - by Marcelo M. Marques
 # Added: 'is_quadview_region' function to identify whether screen is in QuadView mode and if yes to return the corresponding area and region.
@@ -113,9 +116,11 @@ class Set_Demo_Panel(bpy.types.Operator):
 
     def execute(self, context):
         if context.scene.var.RemoVisible and int(time.time()) - context.scene.var.btnRemoTime <= 1:
+            # If it is active then set its visible status to False so that it be closed and reset the button label
             context.scene.var.btnRemoText = "Open Remote Control"
             context.scene.var.RemoVisible = False
         else:
+            # If it is not active then set its visible status to True so that it be opened and reset the button label
             context.scene.var.btnRemoText = "Close Remote Control"
             context.scene.var.RemoVisible = True
             is_quadview, area, region = is_quadview_region(context)
@@ -123,9 +128,16 @@ class Set_Demo_Panel(bpy.types.Operator):
                 override = bpy.context.copy()
                 override["area"] = area
                 override["region"] = region
-                context.scene.var.objRemote = bpy.ops.object.dp_ot_draw_operator(override, 'INVOKE_DEFAULT')
-            else:    
-                context.scene.var.objRemote = bpy.ops.object.dp_ot_draw_operator('INVOKE_DEFAULT')
+            # Had to put this "try/except" statement because when user clicked repeatedly too fast 
+            # on the operator's button it would crash the call due to a context incorrect situation
+            try:
+                if is_quadview:
+                    context.scene.var.objRemote = bpy.ops.object.dp_ot_draw_operator(override, 'INVOKE_DEFAULT')
+                else:    
+                    context.scene.var.objRemote = bpy.ops.object.dp_ot_draw_operator('INVOKE_DEFAULT')
+            except:
+                return {'CANCELLED'}
+
         return {'FINISHED'}
 
 
