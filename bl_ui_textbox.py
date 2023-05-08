@@ -67,7 +67,7 @@ bl_info = {"name": "BL UI Widgets",
 # --- ### Imports
 import bpy
 import gpu
-import bgl
+# import bgl
 import blf
 import time
 
@@ -396,11 +396,8 @@ class BL_UI_Textbox(BL_UI_Button):
 
                 self.shader_marked.uniform_float("color", color)
 
-                bgl.glEnable(bgl.GL_LINE_SMOOTH)
-
                 self.batch_marked.draw(self.shader_marked)
 
-                bgl.glDisable(bgl.GL_LINE_SMOOTH)
 
             # Paint the editing cursor
             if self._cursor_color is None:
@@ -418,13 +415,9 @@ class BL_UI_Textbox(BL_UI_Button):
 
             self.shader_cursor.uniform_float("color", color)
 
-            bgl.glEnable(bgl.GL_LINE_SMOOTH)
-
-            bgl.glLineWidth(self.over_scale(1))
+            gpu.state.line_width_set(self.over_scale(1))
 
             self.batch_cursor.draw(self.shader_cursor)
-
-            bgl.glDisable(bgl.GL_LINE_SMOOTH)
 
         # Paint the text last, over everything else
         super().draw_text()

@@ -61,7 +61,7 @@ bl_info = {"name": "BL UI Widgets",
 # --- ### Imports
 import bpy
 import gpu
-import bgl
+# import bgl
 import blf
 
 from gpu_extras.batch import batch_for_shader
@@ -303,14 +303,12 @@ class BL_UI_Checkbox(BL_UI_Patch):
 
         self.batch_mark = batch_for_shader(self.shader_mark, 'LINE_STRIP', {"pos": vertices})
 
-        bgl.glEnable(bgl.GL_BLEND)
-        bgl.glEnable(bgl.GL_LINE_SMOOTH)
+        gpu.state.blend_set('ALPHA')
 
-        bgl.glLineWidth(self.over_scale(1.5))
+        gpu.state.line_width_set(self.over_scale(1.5))
         self.batch_mark.draw(self.shader_mark)
 
-        bgl.glDisable(bgl.GL_LINE_SMOOTH)
-        bgl.glDisable(bgl.GL_BLEND)
+        gpu.state.blend_set('NONE')
 
     # Overrides base class function
     def draw_text(self):
