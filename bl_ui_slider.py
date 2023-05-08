@@ -69,7 +69,7 @@ bl_info = {"name": "BL UI Widgets",
 # --- ### Imports
 import bpy
 import gpu
-import bgl
+# import bgl
 
 from gpu_extras.batch import batch_for_shader
 
@@ -624,11 +624,9 @@ class BL_UI_Slider(BL_UI_Patch):
 
                 self.set_slider_color()
 
-                bgl.glEnable(bgl.GL_BLEND)
+                gpu.state.blend_set('ALPHA')
 
                 self.batch_slider.draw(self.shader_slider)
-
-                bgl.glEnable(bgl.GL_LINE_SMOOTH)
 
                 self.slider.set_update_shaders(True)
 
@@ -636,11 +634,9 @@ class BL_UI_Slider(BL_UI_Patch):
 
                 self.slider.set_update_shaders(False)
 
-                bgl.glDisable(bgl.GL_LINE_SMOOTH)
-
                 self.slider.draw_text()
 
-                bgl.glDisable(bgl.GL_BLEND)
+                gpu.state.blend_set('NONE')
 
     def draw_slider_border(self):
         # This is to draw the outline and shadow from the slider widget object,
@@ -650,9 +646,7 @@ class BL_UI_Slider(BL_UI_Patch):
 
         self.verify_screen_position(area_height)
 
-        bgl.glEnable(bgl.GL_BLEND)
-
-        bgl.glEnable(bgl.GL_LINE_SMOOTH)
+        gpu.state.blend_set('ALPHA')
 
         self.set_update_shaders(True)
 
@@ -662,9 +656,7 @@ class BL_UI_Slider(BL_UI_Patch):
 
         self.set_update_shaders(False)
 
-        bgl.glDisable(bgl.GL_LINE_SMOOTH)
-
-        bgl.glDisable(bgl.GL_BLEND)
+        gpu.state.blend_set('NONE')
 
     def set_slider_color(self):
         if self._selected_color is None:
