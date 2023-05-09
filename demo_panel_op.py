@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 4),
+           "version": (1, 0, 5),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.5 (03.06.2023) - by Marcelo M. Marques
+# Added: 'time_step' property to allow customization of the interval in seconds between timer events
 
 # v1.0.4 (09.28.2022) - by Marcelo M. Marques
 # Added: Logic to 'poll' classmethod that prevents the panel to be opened in multiple simultaneous instances.
@@ -138,6 +141,9 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
         
         # Note: Leave it empty, e.g. self.valid_modes = {}, for no restrictions to be applied.
         self.valid_modes = {'OBJECT', 'EDIT_MESH'}
+
+        # (float in [0, inf]) – Custom Interval in seconds between timer events (default = 0.1)
+        self.time_step = 0.5
 
         # From Preferences/Themes/User Interface/"State"
         theme = bpy.context.preferences.themes[0]

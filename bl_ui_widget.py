@@ -20,8 +20,8 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 2),
-           "blender": (2, 80, 75),
+           "version": (1, 0, 3),
+           "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
            "category": "3D View",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.3 (05.08.2023) - by atticus-lv
+# Chang: Replaced bgl mode (to be deprecated soon) by gpu module
 
 # v1.0.2 (10.31.2021) - by Marcelo M. Marques
 # Added: 'valid_modes' property to indicate the 'bpy.context.mode' valid values for displaying the panel.
@@ -71,20 +74,19 @@ bl_info = {"name": "BL UI Widgets",
 # --- ### Imports
 import bpy
 import gpu
-# import bgl
 import blf
 import time
 
 from gpu_extras.batch import batch_for_shader
 from math import pi, cos, sin
 
-from .bl_ui_draw_op import get_3d_area_and_region, valid_display_mode
+from . bl_ui_draw_op import get_3d_area_and_region, valid_display_mode
 
 
 class BL_UI_Widget():
 
-    g_tooltip_widget = None  # Widget object which mouse pointer is currently over (e.g. some button)
-    g_exclusive_mode = None  # Widget object which is undergoing an exclusive action (e.g. some textbox)
+    g_tooltip_widget = None   # Widget object which mouse pointer is currently over (e.g. some button)
+    g_exclusive_mode = None   # Widget object which is undergoing an exclusive action (e.g. some textbox)
 
     def __init__(self, x, y, width, height):
 
@@ -96,29 +98,29 @@ class BL_UI_Widget():
         self.height = height
         self.context = None
 
-        self._style = None  # widget color style option (vary per widget subclass type)
+        self._style = None              # widget color style option (vary per widget subclass type)
 
-        self._tooltip_text = ""  # Text for the tooltip
-        self._tooltip_shortcut = ""  # Shortcut for the tooltip
-        self._tooltip_python = ""  # Python command for the tooltip
+        self._tooltip_text = ""         # Text for the tooltip
+        self._tooltip_shortcut = ""     # Shortcut for the tooltip
+        self._tooltip_python = ""       # Python command for the tooltip
 
-        self._is_visible = True  # Indicates whether the object's draw function must be executed or not
-        self._is_enabled = True  # Indicates whether the object is enabled or not (useful for button states)
-        self._is_tooltip = False  # Indicates whether the object instance is of 'Tooltip' type
-        self._is_mslider = False  # Indicates whether the object instance is for drawing the middle section of a 'Slider'
+        self._is_visible = True         # Indicates whether the object's draw function must be executed or not
+        self._is_enabled = True         # Indicates whether the object is enabled or not (useful for button states)
+        self._is_tooltip = False        # Indicates whether the object instance is of 'Tooltip' type
+        self._is_mslider = False        # Indicates whether the object instance is for drawing the middle section of a 'Slider'
 
-        self.__ui_scale = 0  # Saves the latest ui_scale value
-        self.__area_height = 0  # Saves the latest area height value
-        self.__area_width = 0  # Saves the latest area width value
-        self.__valid_modes = []  # List of 'bpy.context.mode' values for restricting panel display to these modes only
+        self.__ui_scale = 0             # Saves the latest ui_scale value
+        self.__area_height = 0          # Saves the latest area height value
+        self.__area_width = 0           # Saves the latest area width value
+        self.__valid_modes = []         # List of 'bpy.context.mode' values for restricting panel display to these modes only
 
-        self.__tooltip_gotimer = 0  # Latest time when mouse entered widget area
+        self.__tooltip_gotimer = 0      # Latest time when mouse entered widget area
         self.__tooltip_current = False  # Indicates whether the tooltip is updated with the current widget data
         self.__tooltip_shifted = False  # Indicates whether the container panel has been dragged to another position
 
-        self.__update_shaders = True  # Indicates whether all other shaders need to be updated for the next draw
-        self.__mouse_down = False  # Indicates whether mouse button is currently pressed by user
-        self.__inrect = False  # Indicates whether mouse pointer is currently over the widget area
+        self.__update_shaders = True    # Indicates whether all other shaders need to be updated for the next draw
+        self.__mouse_down = False       # Indicates whether mouse button is currently pressed by user
+        self.__inrect = False           # Indicates whether mouse pointer is currently over the widget area
 
     @property
     def style(self):
@@ -357,12 +359,10 @@ class BL_UI_Widget():
         # used to be: if scaled_radius == 0 or scaled_radius > 10 or self._rounded_corners == (0,0,0,0):
         # but unfortunately 'TRI_FAN' results in a worse smooth render
         if self.scaled_radius(self._radius, self.height) > 10:
-            vertices = self.calc_corners_for_trifan(self.x_screen, self.y_screen, self.width, self.height, self._radius,
-                                                    'FULL')
+            vertices = self.calc_corners_for_trifan(self.x_screen, self.y_screen, self.width, self.height, self._radius, 'FULL')
             self.batch_panel = batch_for_shader(self.shader, 'TRI_FAN', {"pos": vertices})
         else:
-            vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height, self._radius,
-                                                   'FULL')
+            vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height, self._radius, 'FULL')
             self.batch_panel = batch_for_shader(self.shader, 'LINES', {"pos": vertices})
 
         self.__update_shaders = True
@@ -383,13 +383,13 @@ class BL_UI_Widget():
                 self.__area_height = area_height
                 self.__ui_scale = self.over_scale(1)
                 if self.RC_SLIDE():
-                    drag_offset_x = 0  # Want to keep same x_pos
-                    drag_offset_y = 0  # Want to keep same y_pos
+                    drag_offset_x = 0   # Want to keep same x_pos
+                    drag_offset_y = 0   # Want to keep same y_pos
                     self.update(self.x_screen - drag_offset_x, self.y_screen + drag_offset_y)
                 else:
                     # This is to prevent the panel to slide when user resizes screen viewport
                     if former_area_height > 0:
-                        drag_offset_x = 0  # Want to keep same x_pos (placeholder for future enhancements)
+                        drag_offset_x = 0   # Want to keep same x_pos (placeholder for future enhancements)
                         drag_offset_y = (former_area_height - area_height) / self.over_scale(1)
                         self.update(self.x_screen - drag_offset_x, self.y_screen - drag_offset_y)
 
@@ -409,7 +409,7 @@ class BL_UI_Widget():
             # Timer has not been started
             return True
         if widget._tooltip_text == "" and widget._tooltip_shortcut == "" and \
-                (widget._tooltip_python == "" or not prefs.show_tooltips_python):
+           (widget._tooltip_python == "" or not prefs.show_tooltips_python):
             # Widget has no tooltip message to display
             return True
         if time.time() - widget.__tooltip_gotimer < 1.0:  # <-- Hard coded delay
@@ -453,16 +453,17 @@ class BL_UI_Widget():
         # if scaled_radius > 10:
         #     bgl.glEnable(bgl.GL_POLYGON_SMOOTH)
         # else:
-        #     
+        #     bgl.glEnable(bgl.GL_LINE_SMOOTH)
 
         self.batch_panel.draw(self.shader)
 
         # #used to be: if scaled_radius == 0 or scaled_radius > 10 or self._rounded_corners == (0, 0, 0, 0):
         # if scaled_radius > 10:
         #     bgl.glDisable(bgl.GL_POLYGON_SMOOTH)
-        #     
+        #     bgl.glEnable(bgl.GL_LINE_SMOOTH)
 
         if self._style not in {'NUMBER_SLIDE', 'NUMBER_CLICK'}:
+
             self.draw_outline()
 
             self.draw_shadow()
@@ -579,9 +580,9 @@ class BL_UI_Widget():
                 y_screen = self.over_scale(self.y_screen)
                 width = self.over_scale(self.width)
                 height = self.over_scale(self.height)
-                vertices = ((x_screen, y_screen),
+                vertices = ((x_screen        , y_screen),
                             (x_screen + width, y_screen),
-                            (x_screen, y_screen - height + 1),
+                            (x_screen        , y_screen - height + 1),
                             (x_screen + width, y_screen - height + 1)
                             )
                 self.batch_outline = batch_for_shader(self.shader_outline, 'LINES', {"pos": vertices})
@@ -592,12 +593,11 @@ class BL_UI_Widget():
             if self.scaled_radius(self._radius, self.height) > 10:
                 gpu.state.line_width_set(1)
                 if self.__update_shaders or not hasattr(self, 'batch_outline'):
-                    vertices = self.calc_corners_for_trifan(self.x_screen, self.y_screen, self.width, self.height,
-                                                            self._radius, 'FULL')
+                    vertices = self.calc_corners_for_trifan(self.x_screen, self.y_screen, self.width, self.height, self._radius, 'FULL')
                     self.batch_outline = batch_for_shader(self.shader_outline, 'LINE_LOOP', {"pos": vertices})
                 self.batch_outline.draw(self.shader_outline)
             else:
-                # bgl.glPointSize(1)
+                # gpu.state.point_size_set(1)
                 # vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height, self._radius, 'OUTLINE-A')
                 # self.batch_outline = batch_for_shader(self.shader_outline, 'POINTS', {"pos": vertices})
                 # self.batch_outline.draw(self.shader_outline)
@@ -607,8 +607,7 @@ class BL_UI_Widget():
                 # self.batch_outline.draw(self.shader_outline)
                 gpu.state.line_width_set(1)
                 if self.__update_shaders or not hasattr(self, 'batch_outline'):
-                    vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height,
-                                                           self._radius, 'OUTLINE-A')
+                    vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height, self._radius, 'OUTLINE-A')
                     self.batch_outline = batch_for_shader(self.shader_outline, 'LINE_LOOP', {"pos": vertices})
                 self.batch_outline.draw(self.shader_outline)
 
@@ -648,7 +647,7 @@ class BL_UI_Widget():
                 y_screen = self.over_scale(self.y_screen)
                 width = self.over_scale(self.width)
                 height = self.over_scale(self.height)
-                vertices = ((x_screen, y_screen - height),
+                vertices = ((x_screen        , y_screen - height),
                             (x_screen + width, y_screen - height)
                             )
                 self.batch_shadow1 = batch_for_shader(self.shader_shadow1, 'LINES', {"pos": vertices})
@@ -659,21 +658,18 @@ class BL_UI_Widget():
             if self.scaled_radius(self._radius, self.height) > 10:
                 gpu.state.line_width_set(1)
                 if self.__update_shaders or not hasattr(self, 'batch_shadow1'):
-                    vertices = self.calc_corners_for_trifan(self.x_screen, self.y_screen, self.width, self.height,
-                                                            self._radius, 'SHADOW')
+                    vertices = self.calc_corners_for_trifan(self.x_screen, self.y_screen, self.width, self.height, self._radius, 'SHADOW')
                     self.batch_shadow1 = batch_for_shader(self.shader_shadow1, 'LINE_STRIP', {"pos": vertices})
                 self.batch_shadow1.draw(self.shader_shadow1)
             else:
                 gpu.state.point_size_set(1)
                 if self.__update_shaders or not hasattr(self, 'batch_shadow1'):
-                    vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height,
-                                                           self._radius, 'SHADOW-A')
+                    vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height, self._radius, 'SHADOW-A')
                     self.batch_shadow1 = batch_for_shader(self.shader_shadow1, 'POINTS', {"pos": vertices})
                 self.batch_shadow1.draw(self.shader_shadow1)
                 gpu.state.line_width_set(1)
                 if self.__update_shaders or not hasattr(self, 'batch_shadow2'):
-                    vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height,
-                                                           self._radius, 'SHADOW-B')
+                    vertices = self.calc_corners_for_lines(self.x_screen, self.y_screen, self.width, self.height, self._radius, 'SHADOW-B')
                     self.batch_shadow2 = batch_for_shader(self.shader_shadow2, 'LINES', {"pos": vertices})
                 self.batch_shadow2.draw(self.shader_shadow2)
                 # gpu.state.line_width_set(1)
@@ -704,8 +700,6 @@ class BL_UI_Widget():
             x_screen = self.over_scale(self.x_screen)
             y_screen = self.over_scale(self.y_screen)
 
-            texture = gpu.texture.from_image(self._image)
-
             # Bottom left, top left, top right, bottom right
             vertices = ((x_screen + off_x, y_screen - off_y),
                         (x_screen + off_x, y_screen - sy - off_y),
@@ -720,6 +714,7 @@ class BL_UI_Widget():
             # import bgl
             # bgl.glActiveTexture(bgl.GL_TEXTURE0)
             # bgl.glBindTexture(bgl.GL_TEXTURE_2D, self._image.bindcode)
+            texture = gpu.texture.from_image(self._image)
 
             self.shader_img.bind()
             # self.shader_img.uniform_int("image", 0)
@@ -837,7 +832,7 @@ class BL_UI_Widget():
         widget_x = self.over_scale(self.x_screen)
         widget_y = self.over_scale(self.y_screen)
         if ((widget_x <= x <= self.over_scale(self.x_screen + self.width)) and
-                (widget_y >= y >= self.over_scale(self.y_screen - self.height))):
+            (widget_y >= y >= self.over_scale(self.y_screen - self.height))):
             return True
 
         return False
@@ -1111,10 +1106,10 @@ class BL_UI_Widget():
         if selection == 'SHADOW-B':
             # Determining the 2 borders lines to use with shadow contour corner
             shadow_lines = []
-            shadow_lines.append((o0[0][0] + 0, o0[0][1] - 1))
+            shadow_lines.append((o0[ 0][0] + 0, o0[ 0][1] - 1))
             shadow_lines.append((o3[-1][0] + 1, o3[-1][1] - 1))
-            shadow_lines.append((o3[0][0] + 1, o3[0][1] - 0))
-            shadow_lines.append((o2[-1][0] + 1, y - (h / 2) - 0))
+            shadow_lines.append((o3[ 0][0] + 1, o3[ 0][1] - 0))
+            shadow_lines.append((o2[-1][0] + 1, y - (h/2) - 0))
             return shadow_lines
 
         if selection == 'FULL':
@@ -1162,22 +1157,22 @@ class BL_UI_Widget():
             manually created by me and they should always give a nice contour.
             May the god of I.T. forgive me!
         '''
-        map = [(0,),
-               (1, 0),
-               (2, 0, 1),
-               (3, 0, 2, 1, 1),
-               (4, 0, 3, 1, 2, 1),
-               (5, 0, 4, 1, 3, 1, 2),
-               (6, 0, 5, 1, 4, 1, 3, 2, 2),
-               (7, 0, 6, 1, 5, 1, 4, 2, 3, 2),
-               (8, 0, 7, 1, 6, 1, 5, 2, 4, 2, 3),
-               (9, 0, 8, 1, 7, 1, 6, 2, 5, 2, 4, 3),
+        map = [( 0,),
+               ( 1, 0),
+               ( 2, 0, 1),
+               ( 3, 0, 2, 1, 1),
+               ( 4, 0, 3, 1, 2, 1),
+               ( 5, 0, 4, 1, 3, 1, 2),
+               ( 6, 0, 5, 1, 4, 1, 3, 2, 2),
+               ( 7, 0, 6, 1, 5, 1, 4, 2, 3, 2),
+               ( 8, 0, 7, 1, 6, 1, 5, 2, 4, 2, 3),
+               ( 9, 0, 8, 1, 7, 1, 6, 2, 5, 2, 4, 3),
                (10, 0, 9, 1, 8, 1, 7, 1, 6, 2, 5, 2, 4, 3),
                ]
         i = 0
         coords = []
         pointset = map[radius] + tuple(reversed(map[radius]))
         while i < len(pointset):
-            coords.append((pointset[i], pointset[i + 1]))
+            coords.append((pointset[i], pointset[i+1]))
             i = i + 2
         return coords

@@ -20,8 +20,8 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 1),
-           "blender": (2, 80, 75),
+           "version": (1, 0, 2),
+           "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
            "category": "3D View",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.2 (05.08.2023) - by atticus-lv
+# Chang: Replaced bgl mode (to be deprecated soon) by gpu module
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
 # Chang: just some pep8 code formatting
@@ -61,7 +64,6 @@ bl_info = {"name": "BL UI Widgets",
 # --- ### Imports
 import bpy
 import gpu
-# import bgl
 import blf
 
 from gpu_extras.batch import batch_for_shader

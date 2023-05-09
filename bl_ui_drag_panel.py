@@ -209,8 +209,10 @@ class BL_UI_Drag_Panel(BL_UI_Patch):
     def mouse_move(self, event, x, y):
         if self.__is_drag:
             # Recalculate and update the new position on the viewport
-            new_x = x - self.__drag_offset_x
-            new_y = y - self.__drag_offset_y
+            #new_x = x - self.__drag_offset_x
+            #new_y = y - self.__drag_offset_y
+            new_x = (x - self.__drag_offset_x) * 1 / self.over_scale(1)
+            new_y = (y - self.__drag_offset_y) * 1 / self.over_scale(1)
             self.save_panel_coords(new_x, new_y)
             self.update(new_x, new_y)
             self.layout_widgets()

@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 3),
+           "version": (1, 0, 4),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.4 (03.06.2023) - by Marcelo M. Marques
+# Added: 'time_step' class level property so that developer can customize the interval in seconds between timer events
 
 # v1.0.3 (09.25.2021) - by Marcelo M. Marques
 # Added: Many improvements to help with identifying when the panel must be automatically terminated either due to a change
@@ -83,6 +86,7 @@ class BL_UI_OT_draw_operator(Operator):
     def __init__(self):
         self.widgets = []
         self.valid_modes = []
+        self.time_step = 0.1  # (float in [0, inf]) – Interval in seconds between timer events
         # self.__draw_handle = None  # <-- Was like this before I had implemented the 'lost handler detection logic'
         # self.__draw_events = None  # <--(ditto)
         self.__finished = False
@@ -140,7 +144,7 @@ class BL_UI_OT_draw_operator(Operator):
     def register_handlers(self, args, context):
         BL_UI_OT_draw_operator.handlers = []
         BL_UI_OT_draw_operator.handlers.append(('H', self, context, bpy.types.SpaceView3D.draw_handler_add(self.draw_callback_px, args, 'WINDOW', 'POST_PIXEL')))
-        BL_UI_OT_draw_operator.handlers.append(('T', self, context, context.window_manager.event_timer_add(0.1, window=context.window)))
+        BL_UI_OT_draw_operator.handlers.append(('T', self, context, context.window_manager.event_timer_add(self.time_step, window=context.window)))
         # Was as below before implementing the 'lost handler detection logic'
         # self.__draw_handle = bpy.types.SpaceView3D.draw_handler_add(self.draw_callback_px, args, "WINDOW", "POST_PIXEL")
         # self.__draw_events = context.window_manager.event_timer_add(0.1, window=context.window)
