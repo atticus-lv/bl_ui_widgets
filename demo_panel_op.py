@@ -209,8 +209,9 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
         #     self.button3.state = 3
 
         self.button3 = BL_UI_Button((btnX + ((btnW - 1 + btnG) * btnC)), btnY, btnW, btnH)
-        self.button3.bind_operator('mesh.primitive_monkey_add')
-        self.button3.text = "ADD"
+        self.button3.bind_operator('mesh.primitive_monkey_add',text ='ADD')
+        # self.button3.bind_operator('mesh.primitive_monkey_add',text ='ADD',icon_path=r'ERROR PATH TEST')
+        self.text_size = 13
         self.button3.rounded_corners = (0, 0, 0, 0)
         if self.button3_pressed(self.button3):
             self.button3.state = 3
