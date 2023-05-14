@@ -574,3 +574,18 @@ class BL_UI_Button(BL_UI_Patch):
         else:
             # Up state
             self.__state = 0
+
+    def bind_operator(self,bl_idname,**kwargs):
+        from bpy.app.translations import pgettext_iface as _tips
+        op = getattr(getattr(bpy.ops, bl_idname.split('.')[0]),bl_idname.split('.')[1])
+        self.enabled = op.poll()
+        self.set_mouse_up(lambda widget, event, x, y: op('INVOKE_DEFAULT',**kwargs))
+
+        op_type = op.get_rna_type()
+        self.style = 'RADIO'
+        self.text = _tips(op_type.name)
+        self.text_size = 13
+        self.description = _tips(op_type.description)
+        self.python_cmd = f'bpy.ops.{bl_idname}()'
+
+
