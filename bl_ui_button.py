@@ -610,8 +610,8 @@ class BL_UI_Button(BL_UI_Patch):
 
         if err is None:
             if not icon_only:
-                self.text = text
+                self.text = _tips(op_type.name) if text is None else text
         else:
-            self.text = 'ERROR'
-            self.textwo = 'Icon Path'
+            self.text = _tips('Error') + _tips('Path')
+            self.textwo = _tips(op_type.name) if text is None else text
             self.text_color = (0.8, 0.0, 0.0, 1.0)
