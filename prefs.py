@@ -20,8 +20,8 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 3),
-           "blender": (2, 80, 75),
+           "version": (1, 0, 4),
+           "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
            "category": "3D View",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.4 (05.27.2023) - by Marcelo M. Marques
+# Chang: Added atticus-lv to the acknowledges list for his kindly contributions to this addon
 
 # v1.0.3 (09.25.2022) - by Marcelo M. Marques
 # Chang: Just small updates in some comments on the code
@@ -172,7 +175,7 @@ class BL_UI_Widget_Preferences(AddonPreferences):
         box.label(text=" - BL UI Widgets original project by Jayanam (jayanam.games@gmail.com)")
         box.label(text="   (download it from https://github.com/jayanam/bl_ui_widgets)")
         box.label(text="")
-        box.label(text=" Special thanks to: @batFINGER, Shane Ambler (sambler), vananders, and many others,")
+        box.label(text=" Special thanks to: atticus-lv, @batFINGER, Shane Ambler, vananders, and many others,")
         box.label(text=" for their posts on the community forums, which have been crucial for making this addon.")
         box.label(text="")
 

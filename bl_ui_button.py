@@ -15,14 +15,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # ##### END GPL LICENSE BLOCK #####
-import os.path
 
 # --- ### Header
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 2),
-           "blender": (2, 80, 75),
+           "version": (1, 0, 3),
+           "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
            "category": "3D View",
@@ -32,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.3 (05.27.2023) - by atticus-lv
+# Added: 'bind_operator' function to automatically get info from a given operator idname and bind it to the button 
 
 # v1.0.2 (10.31.2021) - by Marcelo M. Marques
 # Chang: improved reliability on 'mouse_down' and 'mouse_up' overridable functions by conditioning the returned value
@@ -73,9 +75,10 @@ bl_info = {"name": "BL UI Widgets",
 # --- ### Imports
 import bpy
 import blf
+import os.path
 
-from .bl_ui_patch import BL_UI_Patch
-from .bl_ui_label import BL_UI_Label
+from . bl_ui_patch import BL_UI_Patch
+from . bl_ui_label import BL_UI_Label
 
 
 class BL_UI_Button(BL_UI_Patch):
@@ -87,35 +90,35 @@ class BL_UI_Button(BL_UI_Patch):
 
         self._text = "Button"
         self._textwo = ""
-        self._text_color = None  # Button text color (first row)
-        self._text_highlight = None  # Button high color (first row)
-        self._textwo_color = None  # Button text color (second row)
-        self._textwo_highlight = None  # Button high color (second row)
+        self._text_color = None                 # Button text color (first row)
+        self._text_highlight = None             # Button high color (first row)
+        self._textwo_color = None               # Button text color (second row)
+        self._textwo_highlight = None           # Button high color (second row)
 
-        self._style = 'TOOL'  # Button color styles are: {TOOL,RADIO,TOGGLE,NUMBER_CLICK,NUMBER_SLIDE,TEXTBOX}
-        self._bg_color = None  # Button face color (when pressed state == 0)
-        self._selected_color = None  # Button face color (when pressed state == 3)
-        self._outline_color = None  # Button outline color
-        self._roundness = None  # Button corners roundness factor [0..1]
-        self._radius = 8.5  # Button corners circular radius
-        self._rounded_corners = (1, 1, 1, 1)  # 1=Round/0=Straight, coords:(bottomLeft,topLeft,topRight,bottomRight)
-        self._has_shadow = True  # Indicates whether a shadow must be drawn around the button
-        self._alignment = 'CENTER'  # Text alignment options: {CENTER,LEFT,RIGHT}
+        self._style = 'TOOL'                    # Button color styles are: {TOOL,RADIO,TOGGLE,NUMBER_CLICK,NUMBER_SLIDE,TEXTBOX}
+        self._bg_color = None                   # Button face color (when pressed state == 0)
+        self._selected_color = None             # Button face color (when pressed state == 3)
+        self._outline_color = None              # Button outline color
+        self._roundness = None                  # Button corners roundness factor [0..1]
+        self._radius = 8.5                      # Button corners circular radius
+        self._rounded_corners = (1, 1, 1, 1)    # 1=Round/0=Straight, coords:(bottomLeft,topLeft,topRight,bottomRight)
+        self._has_shadow = True                 # Indicates whether a shadow must be drawn around the button
+        self._alignment = 'CENTER'              # Text alignment options: {CENTER,LEFT,RIGHT}
 
-        self._text_size = None  # Button text line 1 size
-        self._textwo_size = None  # Button text line 2 size
-        self._text_margin = 0  # Margin for left aligned text (used by slider and textbox objects)
+        self._text_size = None                  # Button text line 1 size
+        self._textwo_size = None                # Button text line 2 size
+        self._text_margin = 0                   # Margin for left aligned text (used by slider and textbox objects)
 
-        self._text_kerning = None  # Button text kerning (True/False)
-        self._text_shadow_size = None  # Button text shadow size
-        self._text_shadow_offset_x = None  # Button text shadow offset x (positive goes right)
-        self._text_shadow_offset_y = None  # Button text shadow offset y (negative goes down)
-        self._text_shadow_color = None  # Button text shadow color [0..1] = gray tone, from dark to clear
-        self._text_shadow_alpha = None  # Button text shadow alpha value [0..1]
+        self._text_kerning = None               # Button text kerning (True/False)
+        self._text_shadow_size = None           # Button text shadow size
+        self._text_shadow_offset_x = None       # Button text shadow offset x (positive goes right)
+        self._text_shadow_offset_y = None       # Button text shadow offset y (negative goes down)
+        self._text_shadow_color = None          # Button text shadow color [0..1] = gray tone, from dark to clear
+        self._text_shadow_alpha = None          # Button text shadow alpha value [0..1]
 
         self._textpos = (x, y)
 
-        self.__state = 0  # 0 is UP; 1 is Down; 2 is Hover when not pressed or down; 3 is Pressed
+        self.__state = 0                        # 0 is UP; 1 is Down; 2 is Hover when not pressed or down; 3 is Pressed
 
     @property
     def state(self):
@@ -370,8 +373,7 @@ class BL_UI_Button(BL_UI_Patch):
 
         if self._is_enabled and (self.button_pressed_func(self) or self.__state in [1, 3, 5]):
             text_color = tuple(widget_style.text_sel) + (1.0,) if self._text_highlight is None else self._text_highlight
-            textwo_color = tuple(widget_style.text_sel) + (
-                1.0,) if self._textwo_highlight is None else self._textwo_highlight
+            textwo_color = tuple(widget_style.text_sel) + (1.0,) if self._textwo_highlight is None else self._textwo_highlight
         else:
             text_color = tuple(widget_style.text) + (1.0,) if self._text_color is None else self._text_color
             textwo_color = tuple(widget_style.text) + (1.0,) if self._textwo_color is None else self._textwo_color
@@ -390,8 +392,7 @@ class BL_UI_Button(BL_UI_Patch):
         if bpy.app.version >= (3, 0, 0):  # 3.00 issue: 'font_kerning_style' has become extinct
             text_kerning = False
         else:
-            text_kerning = (
-                    widget_style.font_kerning_style == 'FITTED') if self._text_kerning is None else self._text_kerning
+            text_kerning = (widget_style.font_kerning_style == 'FITTED') if self._text_kerning is None else self._text_kerning
             if text_kerning:
                 blf.enable(0, blf.KERNING_DEFAULT)
 
@@ -433,8 +434,7 @@ class BL_UI_Button(BL_UI_Patch):
         if self._style in {'NUMBER_CLICK', 'NUMBER_SLIDE', 'TEXTBOX'}:
             top_margin = int((self.height - normal1) / 2.0)
         else:
-            top_margin = int(
-                (self.height - int(round(normal1 + 0.499)) - int(round(normal2 + 0.499)) - middle_gap) / 2.0)
+            top_margin = int((self.height - int(round(normal1 + 0.499)) - int(round(normal2 + 0.499)) - middle_gap) / 2.0)
 
         textpos_y = self.y_screen - top_margin - int(round(normal1 + 0.499)) + 1
 
@@ -445,8 +445,7 @@ class BL_UI_Button(BL_UI_Patch):
         shadow_alpha = widget_style.shadow_alpha if self._text_shadow_alpha is None else self._text_shadow_alpha
 
         if self._text != "":
-            if self._alignment == 'LEFT' or self._style in {'NUMBER_SLIDE', 'TEXTBOX'} or (
-                    self._style == 'NUMBER_CLICK' and self._is_mslider):
+            if self._alignment == 'LEFT' or self._style in {'NUMBER_SLIDE', 'TEXTBOX'} or (self._style == 'NUMBER_CLICK' and self._is_mslider):
                 textpos_x = self.x_screen + self._text_margin
             elif self._alignment == 'RIGHT':
                 textpos_x = self.x_screen + int((self.width - (length1 / over_scale)) - self._text_margin)
@@ -580,10 +579,9 @@ class BL_UI_Button(BL_UI_Patch):
             # Up state
             self.__state = 0
 
-    def bind_operator(self, bl_idname: str, text: str | None = None,
-                      icon_path=None, icon_only=True,
-                      **kwargs):
+    def bind_operator(self, bl_idname: str, text: str | None = None, icon_path=None, icon_only=True, **kwargs):
         from bpy.app.translations import pgettext_iface as _tips
+
         op = getattr(getattr(bpy.ops, bl_idname.split('.')[0]), bl_idname.split('.')[1])
         self.enabled = op.poll()
         self.set_mouse_up(lambda widget, event, x, y: op('INVOKE_DEFAULT', **kwargs))
@@ -592,13 +590,10 @@ class BL_UI_Button(BL_UI_Patch):
         self.style = 'RADIO'
         self.description = _tips(op_type.description)
         self.python_cmd = f'bpy.ops.{bl_idname}()'
-
         if icon_path is None:
             self.text = _tips(op_type.name) if text is None else text
             return
-
         err = None
-
         if os.path.exists(os.path.realpath(icon_path)):
             try:
                 self.set_image(icon_path)

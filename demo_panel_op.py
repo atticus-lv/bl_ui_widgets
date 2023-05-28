@@ -20,8 +20,8 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 5),
-           "blender": (2, 80, 75),
+           "version": (1, 0, 6),
+           "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
            "category": "3D View",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.6 (05.27.2023) - by atticus-lv
+# Chang: Added example on how to use the new bind_operator function -- see code for the 'self.button3' below
 
 # v1.0.5 (03.06.2023) - by Marcelo M. Marques
 # Added: 'time_step' property to allow customization of the interval in seconds between timer events
@@ -202,23 +205,23 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
             self.button2.state = 3
         btnC += 1
         #
-        # self.button3 = BL_UI_Button((btnX + ((btnW - 1 + btnG) * btnC)), btnY, btnW, btnH)
-        # self.button3.style = 'RADIO'
-        # self.button3.text = "ADD"
-        # self.button3.text_size = 13
-        # self.button3.rounded_corners = (0, 0, 0, 0)
-        # self.button3.set_mouse_up(self.button3_click)
-        # self.button3.set_button_pressed(self.button3_pressed)
-        # self.button3.description = "Adds one little 'MONKEY' object to 3D View area"
-        # self.button3.python_cmd = "bpy.ops.object.dp_ot_draw_operator.button3_click()"
-        # if self.button3_pressed(self.button3):
-        #     self.button3.state = 3
-
+        # For this next example it is shown the old/standard style for defining a button (see the "if True" section) and the alternative
+        # style (as of v1.0.6, see the 'else' section) that is to use the newly added bind_operator method (which is more compact). 
+        # Notice that by using the new method there is not a way to call custom functions though. This may get enhanced in the future.
         self.button3 = BL_UI_Button((btnX + ((btnW - 1 + btnG) * btnC)), btnY, btnW, btnH)
-        self.button3.bind_operator('mesh.primitive_monkey_add',text ='ADD')
-        # self.button3.bind_operator('mesh.primitive_monkey_add',text ='ADD',icon_path=r'ERROR PATH TEST')
-        self.text_size = 13
+        self.button3.text_size = 13
         self.button3.rounded_corners = (0, 0, 0, 0)
+        if True: 
+            self.button3.style = 'RADIO'
+            self.button3.text = "ADD"
+            self.button3.set_mouse_up(self.button3_click)
+            self.button3.set_button_pressed(self.button3_pressed)
+            self.button3.description = "Adds one little 'MONKEY' object to 3D View area"
+            self.button3.python_cmd = "bpy.ops.object.dp_ot_draw_operator.button3_click()"
+            self.button3.rounded_corners = (0, 0, 0, 0)
+        else:
+            self.button3.bind_operator('mesh.primitive_monkey_add', text ='ADD')
+            # self.button3.bind_operator('mesh.primitive_monkey_add', text ='ADD', icon_path=r'ERROR PATH TEST')
         if self.button3_pressed(self.button3):
             self.button3.state = 3
         btnC += 1
@@ -453,6 +456,15 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
 
     # -- Button press handlers
 
+    # This is a sample when a context override is needed to work around the 'context is incorrect' error condition when calling bps operators
+    # def btn_click(self, widget, event, x, y):
+    #     for window in bpy.context.window_manager.windows:
+    #         for area in window.screen.areas:
+    #             if area.type == 'VIEW_3D':
+    #                 with bpy.context.temp_override(window=window, area=area, region=area.regions[-1]):
+    #                     bpy.ops.view3d.view_axis(type = 'TOP')
+    #                 return True
+
     def button1_click(self, widget, event, x, y):
         self.button2.enabled = True
         self.button3.enabled = True
@@ -473,11 +485,11 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
         self.button3.enabled = False
         self.press_only(4)
 
-# I am not even obligated to create any of these functions, see?
-# button5 does not have an active function tied to it at all.
-#
-#    def button5_click(self, widget, event, x, y):
-#        # Miss Me
+    # I am not even obligated to create any of these functions, see?
+    # button5 does not have an active function bound to it at all.
+    #
+    #  def button5_click(self, widget, event, x, y):
+    #      do_something()
 
     def button6_click(self, widget, event, x, y):
         var = bpy.context.scene.var
@@ -499,11 +511,11 @@ class DP_OT_draw_operator(BL_UI_OT_draw_operator):  # in: bl_ui_draw_op.py ##
     def button4_pressed(self, widget):
         return (bpy.context.scene.var.OpState4)
 
-# I am not even obligated to create any of these functions, see?
-# button5 does not have an active function tied to it at all.
-#
-#    def button5_pressed(self, widget):
-#        return (bpy.context.scene.var.OpState5)
+    # I am not even obligated to create any of these functions, see?
+    # button5 does not have an active function tied to it at all.
+    #
+    # def button5_pressed(self, widget):
+    #     return (bpy.context.scene.var.OpState5)
 
     def button6_pressed(self, widget):
         return (bpy.context.scene.var.OpState6)
