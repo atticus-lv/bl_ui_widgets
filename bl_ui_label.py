@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 1),
+           "version": (1, 0, 2),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -32,8 +32,11 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
+# v1.0.2 (07.29.2024) - by Marcelo M. Marques
+# Chang: conditionally removed deprecated blf.size() dpi argument
+
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
-# Chang: just some pep8 code formatting
+# Chang: Just some pep8 code formatting
 
 # v1.0.0 (09.01.2021) - by Marcelo M. Marques
 # Added: Logic to scale the label's text according to both Blender's ui scale configuration and this addon 'preferences' setup
@@ -316,7 +319,10 @@ class BL_UI_Label(BL_UI_Widget):
 
         self.verify_screen_position(area_height)
 
-        blf.size(0, text_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, text_size)
+        else:
+            blf.size(0, text_size, 72)
 
         blf.position(0, self.over_scale(self.x_screen), self.over_scale(self.y_screen), 0)
 

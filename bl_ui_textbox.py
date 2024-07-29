@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 3),
+           "version": (1, 0, 4),
            "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -32,6 +32,10 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
+# v1.0.4 (07.29.2024) - by Marcelo M. Marques
+# Chang: Conditionally removed deprecated 2D_/3D_ prefix for built-in shader names
+# Chang: Conditionally removed deprecated blf.size() dpi argument
+
 # v1.0.3 (05.08.2023) - by atticus-lv
 # Chang: Replaced bgl mode (to be deprecated soon) by gpu module
 
@@ -39,7 +43,7 @@ bl_info = {"name": "BL UI Widgets",
 # Added: Logic to change state during a mouse move action so that the textbox background color is correctly set
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
-# Chang: just some pep8 code formatting
+# Chang: Just some pep8 code formatting
 
 # v1.0.0 (09.01.2021) - by Marcelo M. Marques
 # Added: 'text_highlight' property to allow different text color on the selected textbox (value is standard color tuple).
@@ -280,7 +284,10 @@ class BL_UI_Textbox(BL_UI_Button):
             text_kerning = (widget_style.font_kerning_style == 'FITTED') if self._text_kerning is None else self._text_kerning
             if text_kerning:
                 blf.enable(0, blf.KERNING_DEFAULT)
-        blf.size(0, scaled_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, scaled_size)
+        else:
+            blf.size(0, scaled_size, 72)
 
         if self.__marked_pos[0] == 0:
             start = 0
@@ -314,7 +321,10 @@ class BL_UI_Textbox(BL_UI_Button):
             text_kerning = (widget_style.font_kerning_style == 'FITTED') if self._text_kerning is None else self._text_kerning
             if text_kerning:
                 blf.enable(0, blf.KERNING_DEFAULT)
-        blf.size(0, scaled_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, scaled_size)
+        else:
+            blf.size(0, scaled_size, 72)
 
         mark_target = self.__drag_start_x + self.__drag_length
         text_startx = self.over_scale(self.x_screen + self._text_margin)
@@ -355,9 +365,14 @@ class BL_UI_Textbox(BL_UI_Button):
     # Overrides base class function
     def update(self, x, y):
         super().update(x, y)
-        self.shader_cursor = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-        self.shader_marked = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-        self.update_cursor()
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated 2D_/3D_ prefix for built-in shader names
+            self.shader_cursor = gpu.shader.from_builtin('UNIFORM_COLOR')
+            self.shader_marked = gpu.shader.from_builtin('UNIFORM_COLOR')
+            self.update_cursor()
+        else:
+            self.shader_cursor = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+            self.shader_marked = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+            self.update_cursor()
 
     # Overrides base class function
     def draw(self):

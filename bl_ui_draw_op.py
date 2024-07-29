@@ -54,7 +54,7 @@ bl_info = {"name": "BL UI Widgets",
 # Chang: Renamed function 'validate()' to 'valid_handler()' for better understanding of its purpose.
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
-# Chang: just some pep8 code formatting
+# Chang: Just some pep8 code formatting
 
 # v1.0.0 (09.01.2021) - by Marcelo M. Marques
 # Added: 'terminate_execution' function that can be overriden by programmer in the subclass to control termination of the panel widget.

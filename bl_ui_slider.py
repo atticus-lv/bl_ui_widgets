@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 4),
+           "version": (1, 0, 5),
            "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.5 (07.29.2024) - by Marcelo M. Marques
+# Chang: Conditionally removed deprecated 2D_/3D_ prefix for built-in shader names
 
 # v1.0.4 (05.08.2023) - by atticus-lv
 # Chang: Replaced bgl mode (to be deprecated soon) by gpu module
@@ -590,7 +593,10 @@ class BL_UI_Slider(BL_UI_Patch):
             capped_pos_x = slider_bar[1]
             if capped_width > 0:
 
-                self.shader_slider = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+                if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated 2D_/3D_ prefix for built-in shader names
+                    self.shader_slider = gpu.shader.from_builtin('UNIFORM_COLOR')
+                else:
+                    self.shader_slider = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
 
                 # used to be: if scaled_radius == 0 or scaled_radius > 10 or self._rounded_corners == (0, 0, 0, 0):
                 if self.scaled_radius(self._radius, self.slider.height) > 10:

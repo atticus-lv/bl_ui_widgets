@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 2),
+           "version": (1, 0, 3),
            "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -32,11 +32,15 @@ bl_info = {"name": "BL UI Widgets",
 
 # --- ### Change log
 
+# v1.0.3 (07.29.2024) - by Marcelo M. Marques
+# Chang: Conditionally removed deprecated 2D_/3D_ prefix for built-in shader names
+# Chang: Conditionally removed deprecated blf.size() dpi argument
+
 # v1.0.2 (05.08.2023) - by atticus-lv
 # Chang: Replaced bgl mode (to be deprecated soon) by gpu module
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
-# Chang: just some pep8 code formatting
+# Chang: Just some pep8 code formatting
 
 # v1.0.0 (09.01.2021) - by Marcelo M. Marques
 # Added: Logic to scale the checkbox according to both Blender's ui scale configuration and this addon 'preferences' setup
@@ -288,7 +292,10 @@ class BL_UI_Checkbox(BL_UI_Patch):
             # Take the checkmark color and "dark" it by either 40% or 20%
             color = self.shade_color(color, (0.4 if color[0] > 0.5 else 0.2))
 
-        self.shader_mark = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated 2D_/3D_ prefix for built-in shader names
+            self.shader_mark = gpu.shader.from_builtin('UNIFORM_COLOR')
+        else:
+            self.shader_mark = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
 
         self.shader_mark.bind()
         self.shader_mark.uniform_float("color", color)
@@ -351,10 +358,16 @@ class BL_UI_Checkbox(BL_UI_Patch):
         margin_space = (" " * rounded_scale) if rounded_scale > 0 else " "
         spaced_text = margin_space + self._text + margin_space
 
-        blf.size(0, leveraged_text_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, leveraged_text_size)
+        else:
+            blf.size(0, leveraged_text_size, 72)
         normal = blf.dimensions(0, "W")[1]  # This is to keep a regular pattern since letters differ in height
 
-        blf.size(0, scaled_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, scaled_size)
+        else:
+            blf.size(0, scaled_size, 72)
         length = blf.dimensions(0, spaced_text)[0]
         height = blf.dimensions(0, "W")[1]
 

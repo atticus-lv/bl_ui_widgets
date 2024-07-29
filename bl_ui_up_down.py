@@ -223,7 +223,10 @@ class BL_UI_Up_Down(BL_UI_Widget):
                     
                    )
                     
-        self.shader = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated 2D_/3D_ prefix for built-in shader names
+            self.shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+        else:
+            self.shader = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
         self.batch_up = batch_for_shader(self.shader, 'TRIS', {"pos" : vertices_up})
         self.batch_down = batch_for_shader(self.shader, 'TRIS', {"pos" : vertices_down})
         

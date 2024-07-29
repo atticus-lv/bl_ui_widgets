@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques (fork of Jayanam's original project)",
-           "version": (1, 0, 3),
+           "version": (1, 0, 4),
            "blender": (3, 0, 0),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.4 (07.29.2024) - by Marcelo M. Marques
+# Chang: Conditionally removed deprecated 2D_/3D_ prefix for built-in shader names
 
 # v1.0.3 (05.08.2023) - by atticus-lv
 # Chang: Replaced bgl mode (to be deprecated soon) by gpu module
@@ -47,7 +50,7 @@ bl_info = {"name": "BL UI Widgets",
 #         functions by conditioning the returned value
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
-# Chang: just some pep8 code formatting
+# Chang: Just some pep8 code formatting
 
 # v1.0.0 (09.01.2021) - by Marcelo M. Marques
 # Added: code to retrieve the color setup values from user preferences theme. These values to be used as default values for all widgets.
@@ -354,7 +357,10 @@ class BL_UI_Widget():
             self.x_screen = x
             self.y_screen = y
 
-        self.shader = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated 2D_/3D_ prefix for built-in shader names
+            self.shader = gpu.shader.from_builtin('UNIFORM_COLOR')
+        else:
+            self.shader = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
 
         # used to be: if scaled_radius == 0 or scaled_radius > 10 or self._rounded_corners == (0,0,0,0):
         # but unfortunately 'TRI_FAN' results in a worse smooth render
@@ -544,7 +550,10 @@ class BL_UI_Widget():
             # From Preferences/Themes/User Interface/<style>
             theme = bpy.context.preferences.themes[0]
             widget_style = getattr(theme.user_interface, self.my_style())
-            color = tuple(widget_style.outline) + (1.0,)
+            if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated fifth argument
+                color = tuple(widget_style.outline) 
+            else:    
+                color = tuple(widget_style.outline) + (1.0,)
 
         if color[3] == 0:
             # Means that the drawing will be invisible, so get out of here
@@ -566,7 +575,10 @@ class BL_UI_Widget():
             color = self.shade_color(color, 0.3)
 
         if self.__update_shaders or not hasattr(self, 'shader_outline'):
-            self.shader_outline = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+            if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated 2D_/3D_ prefix for built-in shader names
+                self.shader_outline = gpu.shader.from_builtin('UNIFORM_COLOR')
+            else:
+                self.shader_outline = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
 
         self.shader_outline.bind()
         self.shader_outline.uniform_float("color", color)
@@ -617,8 +629,12 @@ class BL_UI_Widget():
 
         # Paint shadow
         if self.__update_shaders:
-            self.shader_shadow1 = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
-            self.shader_shadow2 = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+            if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated 2D_/3D_ prefix for built-in shader names
+                self.shader_shadow1 = gpu.shader.from_builtin('UNIFORM_COLOR')
+                self.shader_shadow2 = gpu.shader.from_builtin('UNIFORM_COLOR')
+            else:
+                self.shader_shadow1 = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
+                self.shader_shadow2 = gpu.shader.from_builtin('2D_UNIFORM_COLOR')
 
         if self._shadow_color is None:
             # From Preferences/Themes/User Interface/"Styles"
@@ -706,7 +722,11 @@ class BL_UI_Widget():
                         (x_screen + off_x + sx, y_screen - sy - off_y),
                         (x_screen + off_x + sx, y_screen - off_y))
 
-            self.shader_img = gpu.shader.from_builtin('2D_IMAGE')
+            if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated 2D_/3D_ prefix for built-in shader names
+                self.shader_img = gpu.shader.from_builtin('UNIFORM_COLOR')
+            else:
+                self.shader_img = gpu.shader.from_builtin('2D_IMAGE')
+
             self.batch_img = batch_for_shader(self.shader_img,
                                               'TRI_FAN', {"pos": vertices,
                                                           "texCoord": ((0, 1), (0, 0), (1, 0), (1, 1)), },

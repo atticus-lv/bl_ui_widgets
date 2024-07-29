@@ -20,7 +20,7 @@
 bl_info = {"name": "BL UI Widgets",
            "description": "UI Widgets to draw in the 3D view",
            "author": "Marcelo M. Marques",
-           "version": (1, 0, 1),
+           "version": (1, 0, 2),
            "blender": (2, 80, 75),
            "location": "View3D > viewport area",
            "support": "COMMUNITY",
@@ -31,6 +31,9 @@ bl_info = {"name": "BL UI Widgets",
            }
 
 # --- ### Change log
+
+# v1.0.2 (07.29.2024) - by Marcelo M. Marques
+# Chang: conditionally removed deprecated blf.size() dpi argument
 
 # v1.0.1 (09.20.2021) - by Marcelo M. Marques
 # Chang: just some pep8 code formatting
@@ -281,9 +284,15 @@ class BL_UI_Tooltip(BL_UI_Patch):
 
         if text_kerning:
             blf.enable(0, blf.KERNING_DEFAULT)
-        blf.size(0, text_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, text_size)
+        else:
+            blf.size(0, text_size, 72)
         text_normal = blf.dimensions(0, "W")[1]  # This is to keep a regular pattern since letters differ in height
-        blf.size(0, scaled_text_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, scaled_text_size)
+        else:
+            blf.size(0, scaled_text_size, 72)
         text_height = blf.dimensions(0, "W")[1]
         if text_kerning:
             blf.disable(0, blf.KERNING_DEFAULT)
@@ -362,7 +371,10 @@ class BL_UI_Tooltip(BL_UI_Patch):
         line_break = "\n"
         text = text.rstrip()
 
-        blf.size(0, text_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, text_size)
+        else:
+            blf.size(0, text_size, 72)
         if text_kerning:
             blf.enable(0, blf.KERNING_DEFAULT)
 
@@ -451,9 +463,15 @@ class BL_UI_Tooltip(BL_UI_Patch):
 
         if text_kerning:
             blf.enable(0, blf.KERNING_DEFAULT)
-        blf.size(0, leveraged_text_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, leveraged_text_size)
+        else:
+            blf.size(0, leveraged_text_size, 72)
         text_normal = blf.dimensions(0, "W")[1]  # This is to keep a regular pattern since letters differ in height
-        blf.size(0, scaled_text_size, 72)
+        if bpy.app.version >= (4, 0, 0):  # 4.00 issue: removed deprecated blf.size() dpi argument
+            blf.size(0, scaled_text_size)
+        else:
+            blf.size(0, scaled_text_size, 72)
         text_height = blf.dimensions(0, "W")[1]  # This is to keep a regular pattern since letters differ in height
         if text_kerning:
             blf.disable(0, blf.KERNING_DEFAULT)
